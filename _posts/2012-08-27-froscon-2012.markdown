@@ -1,0 +1,21 @@
+---
+layout: post
+title: "FrOSCon 2012"
+date: 2012-08-27 23:02
+keywords: "froscon, froscon7, free and open source conference, froscon 2012, Robert Kowalski"
+tags: [Konferenz]
+---
+
+Letztes Wochenende war ich auf der FrOSCon 2012. Die FrOSCon ist die "Free and Open Source Software Conference" und findet jedes Jahr in St. Augustin bei Bonn statt.
+
+<!-- more-->
+
+Für mich war es die erste FrOSCon. Es folgt eine kurze Zusammenfassung der Vorträge, die mich besonders begeistert haben:
+
+Positiv beeindruckt hat mich Lisp bzw. Clojure als Sprachen, was eigentlich nahe liegt, da ich viel JavaScript schreibe und JavaScript trotz seiner Tücken sehr gern schreibe. Es gab einen eigenen Lisp Track dieses Jahr auf der FrOSCon.
+
+Der Beitrag "How big corporations play the open source game" gab einen interessanten Einblick wie und vor allem warum Großkonzerne (Oracle, IBM, Sun, Microsoft und Google) Open Source fördern.
+
+Judith Andresen hielt einen sehr empfehlenswerten [Vortrag](http://www.andresen.de/2012/08/26/froscon-7-projektstatus-nachrichten-vom-anderen-stern/)  wie Entwickler die projektinterne Kommunikation mit Projektmanagern verbessern können. Denn auch durch verschiedene Sichtweisen auf ein Projekt kommt es immer wieder zu Missverständnissen.
+
+Insgesamt waren es 2 sehr anstrengende Konferenztage, da ich jeden Tag von Morgens bis Abends Input hatte. Gelohnt hat es sich aber allemal.
