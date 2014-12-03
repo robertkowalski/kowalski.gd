@@ -70,3 +70,7 @@ body {
 a:visited {
   color: #00aa71;
 }
+
+#post ul {
+  margin-top: 1.35em;
+}
