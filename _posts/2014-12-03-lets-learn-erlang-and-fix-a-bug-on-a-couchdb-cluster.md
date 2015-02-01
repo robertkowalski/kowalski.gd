@@ -3,7 +3,7 @@ layout: post
 title: "Let’s learn Erlang and fix a bug on a CouchDB Cluster #1"
 description: "Let’s learn Erlang is a series where I will try to teach some Erlang by explaining patches that we will write together. CouchDB 2.0 is a database that got clustering based on Amazon’s Dynamo Paper which allows horizontal scaling of CouchDB by adding nodes to the cluster."
 category: ""
-tags: []
+tags: [Erlang, CouchDB]
 ---
 {% include JB/setup %}
 
