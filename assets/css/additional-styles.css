@@ -75,3 +75,7 @@ a:visited {
   margin-top: 1.35em;
   margin-bottom: 1.35em;
 }
+
+#post pre {
+  margin-bottom: 1em;
+}
