@@ -7,7 +7,7 @@ tags: [Conference, Open Source]
 ---
 {% include JB/setup %}
 
-Andy and me recently organized the first [CouchDB Day in Hamburg](http://day.couchdb.org/). Having more CouchDB Days would be quite awesome, but [Andy](https://twitter.com/awenkhh) and [me](https://twitter.com/robinson_k) work as volunteers in our spare time and we don't scale that much :) - same for the [JS Unconf](http://jsunconf.eu) that I am organizing. In this post I want to share some insights regarding the organization of events. In general this guide is not limited to CouchDB or JavaScript - you can switch it with every other Open Source project or topics related to IT.
+Andy and I recently organized the first [CouchDB Day in Hamburg](http://day.couchdb.org/). Having more CouchDB Days would be quite awesome, but [Andy](https://twitter.com/awenkhh) and [me](https://twitter.com/robinson_k) work as volunteers in our spare time and we don't scale that much :) - same for the [JS Unconf](http://jsunconf.eu) that I am organizing. In this post I want to share some insights regarding the organization of events. In general this guide is not limited to CouchDB or JavaScript - you can switch it with every other Open Source project or topics related to IT.
 
 Organizing a (un)conference is much work, but it is also a lot of fun and a rewarding experience.
 
