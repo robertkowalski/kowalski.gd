@@ -73,3 +73,6 @@ Deciding to contribute every day to Open Source Software changed my life in many
 I would love to see companies supporting their employees more for contributing to Open Source Software - 99.99% of them rely on Open Source Software, e.g. for their dev-tooling, directly for their products or in most cases even in both ways. Sadly it is quite hard for most employees to work on Open Source Software during their work time and not everyone is privileged enough to spend ~1hr of their spare time every day to work on Open Source Software.
 
 Several other folks like [Kyle Simpson](http://blog.getify.com/learned-on-a-1-year-github-streak/) and [Mathias Lafeldt](http://mlafeldt.github.io/blog/write-every-day/) started similar projects - it seems it also changed their life and the way they see the world and I am eager for the future.
+
+
+Update: there is now a chinese translation: http://www.labazhou.net/2015/03/what-happened-while-contributing-to-open-source-on-a-daily-basis-for-one-year/
