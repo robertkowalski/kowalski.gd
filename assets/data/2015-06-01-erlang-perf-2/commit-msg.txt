@@ -1,0 +1,37 @@
+
+All benchmarks were run using this test protocol:
+
+1. turn off all auto starting apps, especially dropbox & co
+2. run make with path
+3. reboot
+4. wait 60secs
+5. boot cluster and wait until successful connected
+6. wait 60secs
+7. run test
+
+Siege:
+
+10000 requests, concurrency 120, reading one doc, unclustered
+interface:
+
+old version, overall run times:
+test 1: 4.36
+test 2: 4.26
+test 3: 4.26
+
+patched version, overall run times:
+test 1: 4.01
+test 2: 3.88
+test 3: 3.91
+
+mean difference:
+
+(4.36 + 4.26 + 4.26) / (4.01 + 3.88 + 3.91) * 100
+
+patched version is 9.1% faster
+
+[1] http://robert-kowalski.de/assets/data/2015-06-01-erlang-perf-2/flame--unpatched-second-request.png
+[2] http://robert-kowalski.de/assets/data/2015-06-01-erlang-perf-2/flame--patched-second-request.png
+[3] http://robert-kowalski.de/assets/data/2015-06-01-erlang-perf-2/results-siege.txt
+
+
