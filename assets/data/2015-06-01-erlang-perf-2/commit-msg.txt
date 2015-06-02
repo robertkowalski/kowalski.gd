@@ -15,23 +15,27 @@ Siege:
 interface:
 
 old version, overall run times:
-test 1: 4.36
-test 2: 4.26
-test 3: 4.26
+test 1: 4.58 secs
+test 2: 4.29 secs
+test 3: 4.50 secs
+test 4: 4.26 secs
+test 5: 4.32 secs
 
 patched version, overall run times:
-test 1: 4.01
-test 2: 3.88
-test 3: 3.91
+test 1: 4.26 secs
+test 2: 4.20 secs
+test 3: 4.19 secs
+test 4: 4.17 secs
+test 5: 4.19 secs
 
 mean difference:
 
-(4.36 + 4.26 + 4.26) / (4.01 + 3.88 + 3.91) * 100
+(4.58 + 4.29 + 4.50 + 4.26 + 4.32) / (4.26 + 4.20 + 4.19 + 4.17 + 4.19) * 100
 
-patched version is 9.1% faster
+patched version is ~4.4% faster
 
-[1] http://robert-kowalski.de/assets/data/2015-06-01-erlang-perf-2/flame--unpatched-second-request.png
-[2] http://robert-kowalski.de/assets/data/2015-06-01-erlang-perf-2/flame--patched-second-request.png
+[1] http://robert-kowalski.de/assets/data/2015-06-01-erlang-perf-2/flame--second--patched.svg
+[2] http://robert-kowalski.de/assets/data/2015-06-01-erlang-perf-2/flame--second--unpatched.svg
 [3] http://robert-kowalski.de/assets/data/2015-06-01-erlang-perf-2/results-siege.txt
 
 
