@@ -1,3 +1,7 @@
+test:
+	@open http://localhost:4000
+	@jekyll serve -w
+
 deploy:
 	@rm -rf ./_site
 	@jekyll build
