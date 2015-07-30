@@ -1,0 +1,159 @@
+Runnig test #1:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           3.84 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3125.00 trans/sec
+Throughput:           0.45 MB/sec
+Concurrency:          115.00
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.12
+Shortest transaction:         0.00
+
+Runnig test #2:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           3.79 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3166.23 trans/sec
+Throughput:           0.46 MB/sec
+Concurrency:          117.73
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.11
+Shortest transaction:         0.00
+
+Runnig test #3:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           3.92 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3061.22 trans/sec
+Throughput:           0.44 MB/sec
+Concurrency:          116.75
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.14
+Shortest transaction:         0.00
+
+Runnig test #4:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           3.78 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3174.60 trans/sec
+Throughput:           0.46 MB/sec
+Concurrency:          116.25
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.12
+Shortest transaction:         0.00
+
+Runnig test #5:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           3.81 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3149.61 trans/sec
+Throughput:           0.45 MB/sec
+Concurrency:          116.50
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.12
+Shortest transaction:         0.00
+
+Runnig test #6:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.00 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3000.00 trans/sec
+Throughput:           0.43 MB/sec
+Concurrency:          117.47
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.27
+Shortest transaction:         0.00
+
+Runnig test #7:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           3.80 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3157.89 trans/sec
+Throughput:           0.45 MB/sec
+Concurrency:          116.84
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.10
+Shortest transaction:         0.00
+
+Runnig test #8:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           3.79 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3166.23 trans/sec
+Throughput:           0.46 MB/sec
+Concurrency:          116.75
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.12
+Shortest transaction:         0.00
+
+Runnig test #9:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.00 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3000.00 trans/sec
+Throughput:           0.43 MB/sec
+Concurrency:          117.08
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.28
+Shortest transaction:         0.00
+
+Runnig test #10:
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           3.81 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      3149.61 trans/sec
+Throughput:           0.45 MB/sec
+Concurrency:          116.73
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.11
+Shortest transaction:         0.00
