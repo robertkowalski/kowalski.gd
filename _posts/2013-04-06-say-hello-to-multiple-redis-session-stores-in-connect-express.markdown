@@ -25,3 +25,5 @@ If all Redis hosts are down connect-multi-redis will choose the builtin MemorySt
 It's very easy to use, but you have to inject the current app instance to get it work with connect (Express has the instance of the app glued on every `res` object and I need to access the app.stack Array).
 
 I would love to get some feedback (Comments here, email, twitter), especially if you know a solution for Connect without injecting the Connect instance.
+
+<img src="http://vg09.met.vgwort.de/na/97fccb006b414c60b6ed86f2f4cb266d" width="1" height="1" alt="">

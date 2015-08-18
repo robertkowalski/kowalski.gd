@@ -41,3 +41,4 @@ Ein wenig CSS dazu, fertig ist die Realtime Bitcoin iOS App.
 
 Das Xcode-Projekt findet ihr unter: <a href="https://github.com/robertkowalski/bitcoin-app-demo" rel="nofollow">https://github.com/robertkowalski/bitcoin-app-demo</a>
 
+<img src="http://vg09.met.vgwort.de/na/3ede50dee7a7486291d15cd2fc14575b" width="1" height="1" alt="">

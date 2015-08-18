@@ -76,3 +76,5 @@ Several other folks like [Kyle Simpson](http://blog.getify.com/learned-on-a-1-ye
 
 
 Update: there is now a [chinese translation](http://www.labazhou.net/2015/03/what-happened-while-contributing-to-open-source-on-a-daily-basis-for-one-year/) available!
+
+<img src="http://vg09.met.vgwort.de/na/73a3ecc5b1564287922d511acb38a381" width="1" height="1" alt="">

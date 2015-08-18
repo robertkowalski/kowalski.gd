@@ -100,3 +100,5 @@ As you are earning money and spending money you will need to think about your ta
 Organizing an event is a lot of work but it is not that hard! If you are organizing an event you can talk to other organizers and ask questions and share experiences.
 
 I would be really happy if we see a CouchDB Day or JS Unconf in other parts of the world!
+
+<img src="http://vg09.met.vgwort.de/na/b6fde22d173d488886df0fd9df55b173" width="1" height="1" alt="">

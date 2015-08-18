@@ -472,3 +472,5 @@ The article is based on a real-life pull-request: [https://github.com/apache/cou
 
 
 Apache CouchDB is an Open Source Project under Apache 2.0 License. The code used in this article is from Apache CouchDB, licensed under Apache License, Version 2.0, January 2004. For details, see: [https://github.com/apache/couchdb/blob/master/LICENSE](https://github.com/apache/couchdb/blob/master/LICENSE)
+
+<img src="http://vg09.met.vgwort.de/na/2dbf8d67bd4843ce9c6a9f3727f25c9a" width="1" height="1" alt="">

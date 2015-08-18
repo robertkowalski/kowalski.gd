@@ -131,3 +131,5 @@ As getting a new box is so fast and easy, we sometimes just throw them away and 
 So far we are quite happy using Ansible, Node.js/Hapi and CouchDB. Our application is running at [contriboot.jsunconf.eu](http://contriboot.jsunconf.eu). We will add some new features in the future and refactor some of the older parts.
 
 I would be really happy to chat with you about orchestration and Node.js in production, I am on twitter as [@robinson_k](https://twitter.com/robinson_k) - or let’s chat in person at [JS Unconf](http://jsunconf.eu)!
+
+<img src="http://vg09.met.vgwort.de/na/9c912079e3cc474d80edc8caa584ec4d" width="1" height="1" alt="">

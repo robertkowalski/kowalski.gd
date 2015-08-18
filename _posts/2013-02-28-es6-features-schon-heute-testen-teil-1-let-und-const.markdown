@@ -59,3 +59,5 @@ console.log(MY_CONSTANT); // 4
 ```
 
 Wie man sieht - es tut sich was in JavaScript, mit dem noch nicht fertigen Harmony bzw. ES6 werden viele neue Features erwartet.
+
+<img src="http://vg09.met.vgwort.de/na/9ce7311b6a48420f967514cedee762fe" width="1" height="1" alt="">

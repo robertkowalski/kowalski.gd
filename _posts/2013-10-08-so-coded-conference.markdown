@@ -53,3 +53,5 @@ I think I didn't mention it already: there was no QA allowed in or after the tal
 ## Conclusion:
 
 So coded raised the bar for other tech conferences. I was told afterwards that the organizers collected things they wanted to fix on conferences they visited over the years and months, and all these ideas went into the planning of so coded and the results made the event so lovely for me. I can't imagine how many countless hours the organizers must have invested into the event which really impressed me as an event organizer and also made me happy as an attendee.
+
+<img src="http://vg09.met.vgwort.de/na/ab0ef3fe9cc04953b33e6c603772c974" width="1" height="1" alt="">
