@@ -50,7 +50,7 @@ brew install haproxy
 After we installed everything we will need to check out the CouchDB source and run:
 
 ```
-./configure
+./configure --disable-fauxton --disable-docs
 make
 ```
 
