@@ -1,7 +1,7 @@
 
 deps:
 ifeq (, $(shell which html-minifier))
-	npm i -g clean-css html-minifier
+	npm i -g html-minifier
 endif
 ifeq (, $(shell which cleancss))
 	npm i -g clean-css
