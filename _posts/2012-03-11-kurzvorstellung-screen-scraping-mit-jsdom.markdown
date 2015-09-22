@@ -67,3 +67,5 @@ Und schon bekomme ich mit ``` $ node blogscraper.js ``` meine Artikeltitel auf d
   Cross platform Test Driven Development (TDD) mit Jasmine, jQuery Mobile, Phonegap und node
   Private und Public in JavaScript
 </pre>
+
+<img src="http://vg09.met.vgwort.de/na/ce3f753e3e204c2b9519b7c639467e3e" width="1" height="1" alt="">

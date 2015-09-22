@@ -364,3 +364,5 @@ Links
 <a href="https://github.com/robertkowalski/enyoJS-Bootcamp" rel="nofollow">Sourcecode auf github</a>.
 
 [Enyo Javascript Framework](http://enyojs.com/)
+
+<img src="http://vg09.met.vgwort.de/na/e8931362482b4da680fec6b5110bcb17" width="1" height="1" alt="">

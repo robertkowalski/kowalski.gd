@@ -107,3 +107,5 @@ Sourcecode
 
 Wie immer gibt es den
 <a href="https://github.com/robertkowalski/titanium-flickr/blob/master/Resources/ui/handheld/ApplicationWindow.js" rel="nofollow">Sourcecode auf github</a>. Meinen Flickr API Key habe ich aus dem Code entfernt.
+
+<img src="http://vg09.met.vgwort.de/na/aae1049f37ad4d83913ba9bde1d02c69" width="1" height="1" alt="">

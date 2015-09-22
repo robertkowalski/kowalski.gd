@@ -85,3 +85,4 @@ Andere Links
 
 [Jasmine im Browser ausprobieren](http://tryjasmine.com)
 
+<img src="http://vg09.met.vgwort.de/na/c41ee1d9211d420e8a762d0d850762df" width="1" height="1" alt="">
