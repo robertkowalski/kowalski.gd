@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
 <head>
-   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-   <title>{{ page.title }}</title>
-   <meta name="author" content="{{ site.author.name }}" />
-
-   <!-- Homepage CSS -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>{{ page.title }}</title>
+  <meta name="author" content="{{ site.author.name }}" />
+  <!-- Homepage CSS -->
   <meta name="google-site-verification" content="vzd_Qx8aTVcPM4CvUaiUc4dwGtU5enYVAqYotJEdYjY" />
   <link rel="stylesheet" href="{{ BASE_PATH }}/assets/css/styles-min.css" type="text/css" />
 
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <link rel="alternate" type="application/atom+xml" title="robert-kowalski.de feed" href="{{ BASE_PATH }}/atom.xml" />
+  <link rel="canonical" href="http://robert-kowalski.de">
 </head>
 <body>
 
@@ -38,11 +40,6 @@
           <a href="http://github.com/{{ site.author.github }}/">github.com/{{ site.author.github }}</a><br />
           <a href="http://twitter.com/{{ site.author.twitter }}/">twitter.com/{{ site.author.twitter }}</a><br />
         </p>
-      </div>
-      <div class="rss">
-        <a href="{{ BASE_PATH }}/atom.xml">
-          <i class="icon icon-rss"></i>
-        </a>
       </div>
     </div>
   </div>
