@@ -14,3 +14,48 @@ a:visited {
 #post pre {
   margin-bottom: 1em;
 }
+
+.terminal .gre {
+  color: #53F77F;
+}
+
+.terminal .pur {
+  color: #6976F4;
+}
+
+.terminal .man {
+  color: #F95E7D
+}
+
+.terminal .err {
+  color: #FA5555
+}
+
+.terminal .inf {
+  color: #FA55FF;
+}
+
+@media only screen
+and (max-device-width: 736px) {
+
+  .small-hide {
+    display: none;
+  }
+
+  #post ul.posts {
+    margin-left: 0;
+  }
+
+  .title {
+    margin: 20px;
+  }
+
+  #post, .footer, #related  {
+    padding: 20px;
+  }
+
+  .small-bordered {
+    border-top: 1px solid #ccc;
+    padding: 10px;
+  }
+}
