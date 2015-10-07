@@ -25,7 +25,7 @@ cd couchdb && git fetch origin
 git checkout article-auth-session-COUCHDB-1356
 ```
 
-To compile CouchDB on OSX (if you don’t use OSX, please read [https://github.com/apache/couchdb/blob/master/INSTALL.Unix](https://github.com/apache/couchdb/blob/master/INSTALL.Unix)) you will need to have the OSX commandline-tools installed. You can install them via terminal:
+To compile CouchDB on OSX (if you don’t use OSX, please read [https://github.com/robertkowalski/couchdb/blob/article-auth-session-COUCHDB-1356/INSTALL.Unix](https://github.com/robertkowalski/couchdb/blob/article-auth-session-COUCHDB-1356/INSTALL.Unix)) you will need to have the OSX commandline-tools installed. You can install them via terminal:
 
 ```
 xcode-select --install
