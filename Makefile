@@ -28,7 +28,7 @@ build:
 
 deploy: deps build
 	@cd ./_site && git init . && git add . && git commit -nm \"Deployment\" && \
-	git push "git@github.com:robertkowalski/robert-kowalski.de.git" master:gh-pages --force && rm -rf .git
+	git push "git@github.com:robertkowalski/kowalski.gd.git" master:gh-pages --force && rm -rf .git
 	-rm -rf ./_site
 
 .PHONY: build
