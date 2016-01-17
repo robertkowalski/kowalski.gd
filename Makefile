@@ -16,8 +16,8 @@ test: deps build
 	@cd _site && python -m "SimpleHTTPServer"
 
 build: clean
-	@bundle exec jekyll build
-	@mkdir -p _site/assets && cp -r assets _site/assets && cp CNAME _site/CNAME
+	bundle exec jekyll build
+	mkdir -p _site/assets && cp -r assets _site/assets && cp CNAME _site/CNAME && cp .nojekyll _site/.nojekyll
 	cd _site && cleancss -o assets/css/styles-min.css assets/themes/tom/css/syntax.css assets/themes/tom/css/screen.css assets/css/additional-styles.css
 	for file in $(shell find _site -name '*.html') ; do \
 		cat $$file | critical --inline -c _site/assets/css/styles-min.css --dest $$file; \
