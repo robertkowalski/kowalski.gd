@@ -31,4 +31,4 @@ deploy: deps build
 	git push "git@github.com:robertkowalski/kowalski.gd.git" master:gh-pages --force && rm -rf .git
 	-rm -rf ./_site
 
-.PHONY: build
+.PHONY: build deps
