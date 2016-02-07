@@ -15,6 +15,14 @@ a:visited {
   margin-bottom: 1em;
 }
 
+.site {
+  width: 65%;
+}
+
+img {
+  max-width: 56em;
+}
+
 .terminal .gre {
   color: #53F77F;
 }
