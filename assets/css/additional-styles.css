@@ -15,6 +15,16 @@ a:visited {
   margin-bottom: 1em;
 }
 
+table {
+  min-width: 320px;
+  border-collapse: collapse;
+}
+
+table, th, td {
+  text-align: right;
+  border: 1px solid black;
+}
+
 .site {
   width: 65%;
 }
