@@ -12,7 +12,7 @@ Welcome to High Performance Erlang!
 *High Performance Erlang* is a series for developers who want
 to deliver the best user experience for their applications. We will take a look
 at different Erlang Open Source projects and improve their performance. The
-articles are based on real world issues and how we fixed them.
+articles are based on real world issues and explains how we fixed them.
 
 ## Why Performance Matters
 
