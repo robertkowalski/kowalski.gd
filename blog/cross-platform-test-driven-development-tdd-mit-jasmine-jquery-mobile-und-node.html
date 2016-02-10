@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>Cross-Platform Test Driven Development (TDD) mit Jasmine, jQuery Mobile, Phonegap und node</title>
+  <meta name="author" content="Robert Kowalski" />
+  <!-- Homepage CSS -->
+  <meta name="google-site-verification" content="vzd_Qx8aTVcPM4CvUaiUc4dwGtU5enYVAqYotJEdYjY" />
+  <link rel="stylesheet" href="/assets/css/styles-min.css" type="text/css" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <link rel="alternate" type="application/atom+xml" title="kowalski.gd atom feed" href="/atom.xml" />
+  <link rel="alternate" type="application/rss+xml" title="kowalski.gd RSS feed" href="/rss.xml">
+  <link rel="canonical" href="http://kowalski.gd">
+</head>
+<body>
+
+  <div class="site">
+    <div class="title">
+      <a href="/">robert kowalski</a>
+
+      <!--a class="extra" href="/archive.html">Archive</a-->
+      <!--a class="extra" href="">Pages</a-->
+      <!--a class="extra" href="/categories.html">Categories</a-->
+      <!--a class="extra" href="/tags.html">Tags</a-->
+      <a class="extra" href="http://theclibook.com">The CLI Book</a>
+      <a class="extra" href="/imprint.html">Impressum</a>
+    </div>
+
+    
+<div id="post">
+  <h1>Cross-Platform Test Driven Development (TDD) mit Jasmine, jQuery Mobile, Phonegap und node</h1>
+  <p class="meta">
+    02 January 2012 
+    
+  </p>
+  <p>Über die Feiertage packte mich mein Entwicklerdrang, einmal eine WebApp / App komplett Testdriven zu schreiben
+und dabei <a href="http://pivotal.github.com/jasmine/">Jasmine von Pivotal Labs</a> in der Praxis auszuprobieren.</p>
+
+<p>Herausgekommen ist eine TDD entwickelte Phonegap App sowie ein node Webservice.</p>
+
+<!-- more -->
+
+<p>Wenn man neues Terrain betritt, ist es ganz praktisch, ein nicht zu großes Projekt zu wählen, mit dem man erste Erfahrungen sammeln kann. So fiel meine Wahl auf den Sensor in der Tür des CCC Hamburg, der den Türstatus für alle ohne Schlüssel zu den Räumlichkeiten übermittelt. Zudem gibt es einen Dienst der die Anzahl der verbundenen DHCP Clients ins Netz stellt.</p>
+
+<p>Für das TDD wählte ich wie schon erwähnt Jasmine von Pivotal Labs, das wie ich finde eine sehr schöne, deklarative Syntax besitzt.</p>
+
+<p>Beim Test Driven Development schreibt man erst den Test und danach den Code, optimalerweise entsteht der Produktivcode im Test selbst und man baut im Anschluss seine Methode daraus.</p>
+
+<p>Die wohl am meisten genutzte Funktion ist <code>.toEqual()</code></p>
+
+<p>Ein typischer fertiger Test sieht dann so aus:</p>
+
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;should add a leading 0 to numbers under 10&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">expect</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">dateHelper</span><span class="p">(</span><span class="mi">1</span><span class="p">)).</span><span class="nx">toEqual</span><span class="p">(</span><span class="s1">&#39;01&#39;</span><span class="p">);</span>
+  <span class="nx">expect</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">dateHelper</span><span class="p">(</span><span class="mi">10</span><span class="p">)).</span><span class="nx">toEqual</span><span class="p">(</span><span class="s1">&#39;10&#39;</span><span class="p">);</span>
+<span class="p">});</span></code></pre></figure>
+
+<p>** Das Entwickeln ist zwar erst ungewohnt, aber mit der Zeit entwickelt man schneller, produziert weniger Bugs und geht gelassen mit unerwarteten Änderungen am Code um. **</p>
+
+<p>Als Cross Platform Lösung habe ich mich an jQuery Mobile bedient, anlässlich des 1.0 Releases.
+Es ging anfangs schnell von der Hand, hinterließ aber einen etwas unreifen Eindruck.</p>
+
+<h2>Verschiedene Plattformen mit einer Codebasis bedienen</h2>
+
+<p>Als ich meine <a href="https://github.com/robertkowalski/doorisMobile-base" rel="nofollow">Codebasis</a>
+hatte, installierte ich XCode und Phonegap und hatte nach kurzer Zeit meine mobile
+<a href="https://github.com/robertkowalski/doorisMobile-phonegap" rel="nofollow">iPhone App</a>
+im iPhone Simulator. Im Footerbereich musste ich noch etwas CSS anpassen, was im Browser so nicht ersichtlich war,
+aufgrund fehlerhaften Verhaltens oder Doku von jQuery Mobile.</p>
+
+<p>Danach habe ich einen <a href="https://github.com/robertkowalski/doorisMobile-node" rel="nofollow">node Webservice</a> aufgesetzt, mit Hilfe des berühmten Express.</p>
+
+<p><s>Den Webservice findet man mittlerweile auf heroku.</s></p>
+
+<p>Durch die vorhandene Codebasis für die Phonegap App musste ich die Views nur noch an die Jade Template Engine anpassen und Cache Manifeste erstellen. Außerdem mussten die Textfiles, die von anderen Servern kamen, wegen Cross-Site-Origin Sicherheitsregeln mit Hilfe der node app &quot;geproxied&quot; werden.</p>
+
+<h2>Lessons Learned</h2>
+
+<p><strong>Vorteile:</strong></p>
+
+<p>Ich bin mit einer Codebasis gestartet, die ich dann ohne viel Aufwand als App aufs iPhone mit Phonegap bringen konnte und später damit einen node.js Webservice bei heroku aufsetzen konnte.</p>
+
+<p>Jasmine hat sich auch in der Praxis eines Projektes als solides, ausgewachsenes Testframework bewiesen, das durch selbstsprechende Syntax überzeugt.</p>
+
+<p><strong>Nachteile:</strong></p>
+
+<p>Ich habe das mobile Framework jQuery Mobile ausprobiert, das trotz 1.0 Release einige Bugs aufweist
+(Buttons im Footer bei mir, <strong>über 500 Issues auf github</strong>). Außerdem zerstört das ein- und ausblenden des Headers
+und des Footers beim scrollen das &quot;native-Experience&quot; komplett.</p>
+
+<p>Auch scheint mir die Größe von jQuery und jQuery mobile für eine mobile Seite zu groß, wenn man bedenkt, daß viele mobile Web User in EDGE/GPRS Gegenden unterwegs sind.</p>
+
+<h2>Sourcecode</h2>
+
+<ul>
+<li><p><a href="https://github.com/robertkowalski/doorisMobile-base" rel="nofollow">Code der BasisApp</a></p></li>
+<li><p><a href="https://github.com/robertkowalski/doorisMobile-phonegap" rel="nofollow">Code für Phonegap</a></p></li>
+<li><p><a href="https://github.com/robertkowalski/doorisMobile-node" rel="nofollow">Code für node</a></p></li>
+</ul>
+
+<h2>Andere Links</h2>
+
+<p><a href="http://tryjasmine.com">Jasmine im Browser ausprobieren</a></p>
+
+<p><img src="http://vg09.met.vgwort.de/na/c41ee1d9211d420e8a762d0d850762df" width="1" height="1" alt=""></p>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li class="small-bordered">
+        <span class="small-hide">10 Feb 2016&raquo; </span>
+        <a href="/blog/high-performance-erlang-finding-bottlenecks-couchdb-1">High Performance Erlang - Finding Bottlenecks in a CouchDB Cluster #1</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">09 Oct 2015&raquo; </span>
+        <a href="/blog/software-development-in-cuba">Software development in Cuba</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">02 Mar 2015&raquo; </span>
+        <a href="/blog/what-happened-while-contributing-to-open-source-on-a-daily-basis-for-one-year">What happened while contributing to Open Source on a daily basis for one year</a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+    <div class="footer">
+      <div class="contact">
+        <p>
+          Robert Kowalski<br />
+          <br />
+          rok@kowalski.gd
+        </p>
+      </div>
+      <div class="contact">
+        <p>
+          <a href="http://github.com/robertkowalski/">github.com/robertkowalski</a><br />
+          <a href="http://twitter.com/robinson_k/">twitter.com/robinson_k</a><br />
+        </p>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+  <script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-28167405-1', 'auto');
+  ga('set', 'anonymizeIp', true);
+  ga('send', 'pageview');
+</script>
+
+
+
+
+</body>
+</html>
+

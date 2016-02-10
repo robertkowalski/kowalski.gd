@@ -1,0 +1,227 @@
+(23:21:53) [robert@tequila-new] ~ $ ./bench.sh
+[ * ] Setup environment ... ok
+[ * ] Ensure CouchDB is built ... ok
+[ * ] Prepare configuration files ... ok
+[ * ] Start node node1 ... ok
+[ * ] Start node node2 ... ok
+[ * ] Start node node3 ... ok
+[ * ] Check node at http://127.0.0.1:15984/ ... failed: [Errno socket error] [Errno 61] Connection refused
+[ * ] Check node at http://127.0.0.1:25984/ ... ok
+[ * ] Check node at http://127.0.0.1:35984/ ... ok
+[ * ] Check node at http://127.0.0.1:15984/ ... ok
+[ * ] Developers cluster is set up at http://127.0.0.1:15984.
+Admin username: Admin Party!
+Password: You do not need any password.
+Time to hack! ...
+
+Runnig test #1:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          38.47 secs
+Data transferred:         3.34 MB
+Response time:            0.10 secs
+Transaction rate:      1247.73 trans/sec
+Throughput:           0.09 MB/sec
+Concurrency:          118.92
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          0.33
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+Runnig test #2:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          39.87 secs
+Data transferred:         3.34 MB
+Response time:            0.10 secs
+Transaction rate:      1203.91 trans/sec
+Throughput:           0.08 MB/sec
+Concurrency:          118.92
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          2.22
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+Runnig test #3:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          39.76 secs
+Data transferred:         3.34 MB
+Response time:            0.10 secs
+Transaction rate:      1207.24 trans/sec
+Throughput:           0.08 MB/sec
+Concurrency:          118.87
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          2.19
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+Runnig test #4:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          37.78 secs
+Data transferred:         3.34 MB
+Response time:            0.09 secs
+Transaction rate:      1270.51 trans/sec
+Throughput:           0.09 MB/sec
+Concurrency:          119.11
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          0.26
+Shortest transaction:         0.01
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+Runnig test #5:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          38.16 secs
+Data transferred:         3.34 MB
+Response time:            0.09 secs
+Transaction rate:      1257.86 trans/sec
+Throughput:           0.09 MB/sec
+Concurrency:          118.90
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          0.33
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+Runnig test #6:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          40.02 secs
+Data transferred:         3.34 MB
+Response time:            0.10 secs
+Transaction rate:      1199.40 trans/sec
+Throughput:           0.08 MB/sec
+Concurrency:          119.19
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          1.91
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+Runnig test #7:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          40.00 secs
+Data transferred:         3.34 MB
+Response time:            0.10 secs
+Transaction rate:      1200.00 trans/sec
+Throughput:           0.08 MB/sec
+Concurrency:          119.03
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          2.40
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+Runnig test #8:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          40.11 secs
+Data transferred:         3.34 MB
+Response time:            0.10 secs
+Transaction rate:      1196.71 trans/sec
+Throughput:           0.08 MB/sec
+Concurrency:          119.02
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          2.28
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+Runnig test #9:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          39.97 secs
+Data transferred:         3.34 MB
+Response time:            0.10 secs
+Transaction rate:      1200.90 trans/sec
+Throughput:           0.08 MB/sec
+Concurrency:          118.97
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          2.31
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+Runnig test #10:
+      done.
+
+Transactions:          48000 hits
+Availability:         100.00 %
+Elapsed time:          41.92 secs
+Data transferred:         3.34 MB
+Response time:            0.10 secs
+Transaction rate:      1145.04 trans/sec
+Throughput:           0.08 MB/sec
+Concurrency:          118.79
+Successful transactions:       48000
+Failed transactions:             0
+Longest transaction:          2.40
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+[error] unable to create log file: /usr/local/var/siege.log: No such file or directory
+./bench.sh: line 22:  1119 Terminated: 15          $COUCHDB_PATH/dev/run --with-admin-party-please

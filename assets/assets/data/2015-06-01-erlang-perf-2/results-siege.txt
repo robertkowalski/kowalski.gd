@@ -1,0 +1,168 @@
+Unpatched
+=========
+
+(00:14:43) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.58 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2620.09 trans/sec
+Throughput:           0.38 MB/sec
+Concurrency:          116.99
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.10
+Shortest transaction:         0.02
+
+(00:15:14) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.29 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2797.20 trans/sec
+Throughput:           0.40 MB/sec
+Concurrency:          118.41
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.09
+Shortest transaction:         0.00
+
+(00:16:19) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.50 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2666.67 trans/sec
+Throughput:           0.38 MB/sec
+Concurrency:          118.18
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.21
+Shortest transaction:         0.00
+
+(00:17:25) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.26 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2816.90 trans/sec
+Throughput:           0.41 MB/sec
+Concurrency:          118.32
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.10
+Shortest transaction:         0.00
+
+(00:18:29) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.32 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2777.78 trans/sec
+Throughput:           0.40 MB/sec
+Concurrency:          118.27
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.10
+Shortest transaction:         0.00
+
+
+Patched
+=======
+
+(00:05:20) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.26 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2816.90 trans/sec
+Throughput:           0.41 MB/sec
+Concurrency:          116.47
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.10
+Shortest transaction:         0.01
+
+(00:05:44) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.20 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2857.14 trans/sec
+Throughput:           0.41 MB/sec
+Concurrency:          118.26
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.09
+Shortest transaction:         0.00
+
+(00:06:48) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.19 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2863.96 trans/sec
+Throughput:           0.41 MB/sec
+Concurrency:          118.20
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.10
+Shortest transaction:         0.00
+
+(00:07:52) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.17 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2877.70 trans/sec
+Throughput:           0.41 MB/sec
+Concurrency:          118.40
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.10
+Shortest transaction:         0.00
+
+(00:08:56) [robert@tequila-osx] ~ $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.19 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2863.96 trans/sec
+Throughput:           0.41 MB/sec
+Concurrency:          118.28
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.10
+Shortest transaction:         0.00
+
+(00:10:00) [robert@tequila-osx] ~ $

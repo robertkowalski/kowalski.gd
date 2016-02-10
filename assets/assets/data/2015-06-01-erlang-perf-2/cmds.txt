@@ -1,0 +1,5 @@
+rm stacks.out && rm flame.svg
+curl http://localhost:15986/foo/6f6444f011e4110530db098aa0000c7d
+./src/eflame/stack_to_flame.sh < stacks.out > flame.svg && open flame.svg
+
+siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d

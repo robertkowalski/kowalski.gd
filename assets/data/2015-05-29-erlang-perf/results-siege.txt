@@ -1,0 +1,91 @@
+Patched
+=======
+
+(20:34:18) [robert@tequila-osx] ~/apache/couchdb (master *) $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.39 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2733.49 trans/sec
+Throughput:           0.39 MB/sec
+Concurrency:          116.69
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.09
+Shortest transaction:         0.01
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+
+
+
+(20:35:54) [robert@tequila-osx] ~/apache/couchdb (master *) $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.37 secs
+Data transferred:         1.73 MB
+Response time:            0.04 secs
+Transaction rate:      2746.00 trans/sec
+Throughput:           0.40 MB/sec
+Concurrency:          118.04
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.06
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+
+
+Unpatched
+=========
+
+(20:47:39) [robert@tequila-osx] ~/apache/couchdb (master *) $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.82 secs
+Data transferred:         1.73 MB
+Response time:            0.05 secs
+Transaction rate:      2489.63 trans/sec
+Throughput:           0.36 MB/sec
+Concurrency:          117.18
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.09
+Shortest transaction:         0.01
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+(20:48:39) [robert@tequila-osx] ~/apache/couchdb (master *) $ siege -q -c120 -r100 -b http://127.0.0.1:15986/foo/6f6444f011e4110530db098aa0000c7d
+      done.
+
+Transactions:          12000 hits
+Availability:         100.00 %
+Elapsed time:           4.78 secs
+Data transferred:         1.73 MB
+Response time:            0.05 secs
+Transaction rate:      2510.46 trans/sec
+Throughput:           0.36 MB/sec
+Concurrency:          118.30
+Successful transactions:       12000
+Failed transactions:             0
+Longest transaction:          0.09
+Shortest transaction:         0.00
+
+FILE: /usr/local/var/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.

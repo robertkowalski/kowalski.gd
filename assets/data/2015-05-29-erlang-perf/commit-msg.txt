@@ -1,0 +1,48 @@
+perf: http layer - cache couchdb version
+
+I have taken a look at our http stack with erlang:trace and flamegraphs.
+It turned out that we spend a lot of our time for ever request in the
+function couch_server:get_version which simply gets the current CouchDB
+version. [1]
+
+So I tried to memoize it, with pretty good results [2]. I benchmarked
+the unclustered interface, but (almost?) all our requests are accessing
+this function so it should also be beneficial for chttpd & friends.
+
+After a better looking flamegraph I and good feedback from Alex I tried
+to run Siege [3] on it.
+
+All benchmarks were run using this test protocol:
+
+1. turn off all auto starting apps, especially dropbox & co
+2. run make with path
+3. reboot
+4. wait 60secs
+5. boot cluster and wait until successful connected
+6. wait 60secs
+7. run test
+
+Siege:
+
+10000 requests, concurrency 120, reading one doc, unclustered
+interface:
+
+old version, overall run times:
+test 1: 4.82
+test 2: 4.78
+
+patched version, overall run times:
+test 1: 4.39
+test 2: 4.37
+
+mean difference:
+
+(4.82 + 4.78) / (4.39 + 4.37) * 100
+
+patched version is 9.5% faster
+
+[1] http://robert-kowalski.de/assets/data/2015-05-29-erlang-perf/flame--unpatched-second-request.png
+[2] http://robert-kowalski.de/assets/data/2015-05-29-erlang-perf/flame--patched-second-request.png
+[3] http://robert-kowalski.de/assets/data/2015-05-29-erlang-perf/results-siege.txt
+
+

@@ -1,0 +1,469 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" width="1200" height="274" onload="init(evt)" viewBox="0 0 1200 274" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<defs >
+	<linearGradient id="background" y1="0" y2="1" x1="0" x2="0" >
+		<stop stop-color="#eeeeee" offset="5%" />
+		<stop stop-color="#eeeeb0" offset="95%" />
+	</linearGradient>
+</defs>
+<style type="text/css">
+	.func_g:hover { stroke:black; stroke-width:0.5; cursor:pointer; }
+</style>
+<script type="text/ecmascript">
+<![CDATA[
+	var details, svg;
+	function init(evt) { 
+		details = document.getElementById("details").firstChild; 
+		svg = document.getElementsByTagName("svg")[0];
+	}
+	function s(info) { details.nodeValue = "Function: " + info; }
+	function c() { details.nodeValue = ' '; }
+	function find_child(parent, name, attr) {
+		var children = parent.childNodes;
+		for (var i=0; i<children.length;i++) {
+			if (children[i].tagName == name)
+				return (attr != undefined) ? children[i].attributes[attr].value : children[i];
+		}
+		return;
+	}
+	function orig_save(e, attr, val) {
+		if (e.attributes["_orig_"+attr] != undefined) return;
+		if (e.attributes[attr] == undefined) return;
+		if (val == undefined) val = e.attributes[attr].value;
+		e.setAttribute("_orig_"+attr, val);
+	}
+	function orig_load(e, attr) {
+		if (e.attributes["_orig_"+attr] == undefined) return;
+		e.attributes[attr].value = e.attributes["_orig_"+attr].value;
+		e.removeAttribute("_orig_"+attr);
+	}
+	function update_text(e) {
+		var r = find_child(e, "rect");
+		var t = find_child(e, "text");
+		var w = parseFloat(r.attributes["width"].value) -3;
+		var txt = find_child(e, "title").textContent.replace(/\([^(]*\)/,"");
+		t.attributes["x"].value = parseFloat(r.attributes["x"].value) +3;
+		
+		// Smaller than this size won't fit anything
+		if (w < 2*12*0.59) {
+			t.textContent = "";
+			return;
+		}
+		
+		t.textContent = txt;
+		// Fit in full text width
+		if (/^ *$/.test(txt) || t.getSubStringLength(0, txt.length) < w)
+			return;
+		
+		for (var x=txt.length-2; x>0; x--) {
+			if (t.getSubStringLength(0, x+2) <= w) { 
+				t.textContent = txt.substring(0,x) + "..";
+				return;
+			}
+		}
+		t.textContent = "";
+	}
+	function zoom_reset(e) {
+		if (e.attributes != undefined) {
+			orig_load(e, "x");
+			orig_load(e, "width");
+		}
+		if (e.childNodes == undefined) return;
+		for(var i=0, c=e.childNodes; i<c.length; i++) {
+			zoom_reset(c[i]);
+		}
+	}
+	function zoom_child(e, x, ratio) {
+		if (e.attributes != undefined) {
+			if (e.attributes["x"] != undefined) {
+				orig_save(e, "x");
+				e.attributes["x"].value = (parseFloat(e.attributes["x"].value) - x - 10) * ratio + 10;
+				if(e.tagName == "text") e.attributes["x"].value = find_child(e.parentNode, "rect", "x") + 3;
+			}
+			if (e.attributes["width"] != undefined) {
+				orig_save(e, "width");
+				e.attributes["width"].value = parseFloat(e.attributes["width"].value) * ratio;
+			}
+		}
+		
+		if (e.childNodes == undefined) return;
+		for(var i=0, c=e.childNodes; i<c.length; i++) {
+			zoom_child(c[i], x-10, ratio);
+		}
+	}
+	function zoom_parent(e) {
+		if (e.attributes) {
+			if (e.attributes["x"] != undefined) {
+				orig_save(e, "x");
+				e.attributes["x"].value = 10;
+			}
+			if (e.attributes["width"] != undefined) {
+				orig_save(e, "width");
+				e.attributes["width"].value = parseInt(svg.width.baseVal.value) - (10*2);
+			}
+		}
+		if (e.childNodes == undefined) return;
+		for(var i=0, c=e.childNodes; i<c.length; i++) {
+			zoom_parent(c[i]);
+		}
+	}
+	function zoom(node) { 
+		var attr = find_child(node, "rect").attributes;
+		var width = parseFloat(attr["width"].value);
+		var xmin = parseFloat(attr["x"].value);
+		var xmax = parseFloat(xmin + width);
+		var ymin = parseFloat(attr["y"].value);
+		var ratio = (svg.width.baseVal.value - 2*10) / width;
+		
+		// XXX: Workaround for JavaScript float issues (fix me)
+		var fudge = 0.0001;
+		
+		var unzoombtn = document.getElementById("unzoom");
+		unzoombtn.style["opacity"] = "1.0";
+		
+		var el = document.getElementsByTagName("g");
+		for(var i=0;i<el.length;i++){
+			var e = el[i];
+			var a = find_child(e, "rect").attributes;
+			var ex = parseFloat(a["x"].value);
+			var ew = parseFloat(a["width"].value);
+			// Is it an ancestor
+			if (0 == 0) {
+				var upstack = parseFloat(a["y"].value) > ymin;
+			} else {
+				var upstack = parseFloat(a["y"].value) < ymin;
+			}
+			if (upstack) {
+				// Direct ancestor
+				if (ex <= xmin && (ex+ew+fudge) >= xmax) {
+					e.style["opacity"] = "0.5";
+					zoom_parent(e);
+					e.onclick = function(e){unzoom(); zoom(this);};
+					update_text(e);
+				}
+				// not in current path
+				else
+					e.style["display"] = "none";
+			}
+			// Children maybe
+			else {
+				// no common path
+				if (ex < xmin || ex + fudge >= xmax) {
+					e.style["display"] = "none";
+				}
+				else {
+					zoom_child(e, xmin, ratio);
+					e.onclick = function(e){zoom(this);};
+					update_text(e);
+				}
+			}
+		}
+	}
+	function unzoom() {
+		var unzoombtn = document.getElementById("unzoom");
+		unzoombtn.style["opacity"] = "0.0";
+		
+		var el = document.getElementsByTagName("g");
+		for(i=0;i<el.length;i++) {
+			el[i].style["display"] = "block";
+			el[i].style["opacity"] = "1";
+			zoom_reset(el[i]);
+			update_text(el[i]);
+		}
+	}	
+]]>
+</script>
+<rect x="0.0" y="0" width="1200.0" height="274.0" fill="url(#background)"  />
+<text text-anchor="middle" x="600.00" y="24" font-size="17" font-family="Verdana" fill="rgb(0,0,0)"  >Flame Graph</text>
+<text text-anchor="" x="10.00" y="257" font-size="12" font-family="Verdana" fill="rgb(0,0,0)" id="details" > </text>
+<text text-anchor="" x="10.00" y="24" font-size="12" font-family="Verdana" fill="rgb(0,0,0)" id="unzoom" onclick="unzoom()" style="opacity:0.0;cursor:pointer" >Reset Zoom</text>
+<g class="func_g" onmouseover="s('lists:foldl/3 (3 samples, 14.29%)')" onmouseout="c()" onclick="zoom(this)">
+<title>lists:foldl/3 (3 samples, 14.29%)</title><rect x="1021.4" y="129" width="168.6" height="15.0" fill="rgb(249,73,38)" rx="2" ry="2" />
+<text text-anchor="" x="1024.43" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >lists:foldl/3</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_request:start_response_length/2 (3 samples, 14.29%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_request:start_response_length/2 (3 samples, 14.29%)</title><rect x="1021.4" y="145" width="168.6" height="15.0" fill="rgb(210,104,35)" rx="2" ry="2" />
+<text text-anchor="" x="1024.43" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochiweb_request:star..</text>
+</g>
+<g class="func_g" onmouseover="s('fabric_util:recv/4   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>fabric_util:recv/4   (1 samples, 4.76%)</title><rect x="66.2" y="129" width="56.2" height="15.0" fill="rgb(249,25,44)" rx="2" ry="2" />
+<text text-anchor="" x="69.19" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >fabri..</text>
+</g>
+<g class="func_g" onmouseover="s('string:-to_lower/1-lc$^0/1-0-/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>string:-to_lower/1-lc$^0/1-0-/1   (1 samples, 4.76%)</title><rect x="10.0" y="97" width="56.2" height="15.0" fill="rgb(217,194,23)" rx="2" ry="2" />
+<text text-anchor="" x="13.00" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >strin..</text>
+</g>
+<g class="func_g" onmouseover="s('io_lib_format:decr_pc/2   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>io_lib_format:decr_pc/2   (1 samples, 4.76%)</title><rect x="796.7" y="65" width="56.2" height="15.0" fill="rgb(242,81,35)" rx="2" ry="2" />
+<text text-anchor="" x="799.67" y="75.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >io_li..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_httpd:doc_etag/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_httpd:doc_etag/1 (1 samples, 4.76%)</title><rect x="234.8" y="161" width="56.2" height="15.0" fill="rgb(226,47,10)" rx="2" ry="2" />
+<text text-anchor="" x="237.76" y="171.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('io_lib_format:fwrite/2   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>io_lib_format:fwrite/2   (1 samples, 4.76%)</title><rect x="852.9" y="81" width="56.1" height="15.0" fill="rgb(218,32,24)" rx="2" ry="2" />
+<text text-anchor="" x="855.86" y="91.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >io_li..</text>
+</g>
+<g class="func_g" onmouseover="s('lists:foldl/3 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>lists:foldl/3 (1 samples, 4.76%)</title><rect x="740.5" y="129" width="56.2" height="15.0" fill="rgb(245,201,17)" rx="2" ry="2" />
+<text text-anchor="" x="743.48" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >lists..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_util:to_hex/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_util:to_hex/1 (1 samples, 4.76%)</title><rect x="291.0" y="113" width="56.1" height="15.0" fill="rgb(254,229,23)" rx="2" ry="2" />
+<text text-anchor="" x="293.95" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('chttpd_db:couch_doc_open/4 (3 samples, 14.29%)')" onmouseout="c()" onclick="zoom(this)">
+<title>chttpd_db:couch_doc_open/4 (3 samples, 14.29%)</title><rect x="66.2" y="161" width="168.6" height="15.0" fill="rgb(249,218,3)" rx="2" ry="2" />
+<text text-anchor="" x="69.19" y="171.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >chttpd_db:couch_doc_o..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_httpd:send_json/4 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_httpd:send_json/4 (1 samples, 4.76%)</title><rect x="347.1" y="177" width="56.2" height="15.0" fill="rgb(239,195,16)" rx="2" ry="2" />
+<text text-anchor="" x="350.14" y="187.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('io_lib_format:collect_cseq/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>io_lib_format:collect_cseq/2 (1 samples, 4.76%)</title><rect x="909.0" y="49" width="56.2" height="15.0" fill="rgb(226,38,42)" rx="2" ry="2" />
+<text text-anchor="" x="912.05" y="59.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >io_li..</text>
+</g>
+<g class="func_g" onmouseover="s('chttpd:etag_respond/3 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>chttpd:etag_respond/3 (1 samples, 4.76%)</title><rect x="10.0" y="177" width="56.2" height="15.0" fill="rgb(220,13,35)" rx="2" ry="2" />
+<text text-anchor="" x="13.00" y="187.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >chttp..</text>
+</g>
+<g class="func_g" onmouseover="s('mem3:quorum/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mem3:quorum/1 (1 samples, 4.76%)</title><rect x="178.6" y="129" width="56.2" height="15.0" fill="rgb(254,29,12)" rx="2" ry="2" />
+<text text-anchor="" x="181.57" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mem3:..</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_headers:-from_list/1-fun-0-/2   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_headers:-from_list/1-fun-0-/2   (1 samples, 4.76%)</title><rect x="1021.4" y="113" width="56.2" height="15.0" fill="rgb(223,177,5)" rx="2" ry="2" />
+<text text-anchor="" x="1024.43" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochi..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_doc:revid_to_str/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_doc:revid_to_str/1 (1 samples, 4.76%)</title><rect x="291.0" y="129" width="56.1" height="15.0" fill="rgb(210,178,31)" rx="2" ry="2" />
+<text text-anchor="" x="293.95" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_doc:doc_to_json_obj/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_doc:doc_to_json_obj/2 (1 samples, 4.76%)</title><rect x="291.0" y="161" width="56.1" height="15.0" fill="rgb(246,201,41)" rx="2" ry="2" />
+<text text-anchor="" x="293.95" y="171.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_headers:insert/3 (2 samples, 9.52%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_headers:insert/3 (2 samples, 9.52%)</title><rect x="1077.6" y="113" width="112.4" height="15.0" fill="rgb(248,76,40)" rx="2" ry="2" />
+<text text-anchor="" x="1080.62" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochiweb_head..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_httpd:http_1_0_keep_alive/2 (5 samples, 23.81%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_httpd:http_1_0_keep_alive/2 (5 samples, 23.81%)</title><rect x="403.3" y="161" width="281.0" height="15.0" fill="rgb(254,30,18)" rx="2" ry="2" />
+<text text-anchor="" x="406.33" y="171.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch_httpd:http_1_0_keep_alive/2</text>
+</g>
+<g class="func_g" onmouseover="s('rexi:cast/3 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>rexi:cast/3 (1 samples, 4.76%)</title><rect x="122.4" y="97" width="56.2" height="15.0" fill="rgb(211,67,41)" rx="2" ry="2" />
+<text text-anchor="" x="125.38" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >rexi:..</text>
+</g>
+<g class="func_g" onmouseover="s('io_lib_format:fwrite/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>io_lib_format:fwrite/2 (1 samples, 4.76%)</title><rect x="909.0" y="81" width="56.2" height="15.0" fill="rgb(210,136,2)" rx="2" ry="2" />
+<text text-anchor="" x="912.05" y="91.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >io_li..</text>
+</g>
+<g class="func_g" onmouseover="s('string:-to_lower/1-lc$^0/1-0-/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>string:-to_lower/1-lc$^0/1-0-/1 (1 samples, 4.76%)</title><rect x="515.7" y="129" width="56.2" height="15.0" fill="rgb(213,194,39)" rx="2" ry="2" />
+<text text-anchor="" x="518.71" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >strin..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_util:rfc1123_date/0 (3 samples, 14.29%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_util:rfc1123_date/0 (3 samples, 14.29%)</title><rect x="796.7" y="113" width="168.5" height="15.0" fill="rgb(236,65,7)" rx="2" ry="2" />
+<text text-anchor="" x="799.67" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch_util:rfc1123_da..</text>
+</g>
+<g class="func_g" onmouseover="s('string:to_lower_char/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>string:to_lower_char/1   (1 samples, 4.76%)</title><rect x="628.1" y="81" width="56.2" height="15.0" fill="rgb(229,201,53)" rx="2" ry="2" />
+<text text-anchor="" x="631.10" y="91.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >strin..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_httpd:initialize_jsonp/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_httpd:initialize_jsonp/1 (1 samples, 4.76%)</title><rect x="347.1" y="161" width="56.2" height="15.0" fill="rgb(232,101,49)" rx="2" ry="2" />
+<text text-anchor="" x="350.14" y="171.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('io_lib_format:field_width/2   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>io_lib_format:field_width/2   (1 samples, 4.76%)</title><rect x="909.0" y="33" width="56.2" height="15.0" fill="rgb(226,7,7)" rx="2" ry="2" />
+<text text-anchor="" x="912.05" y="43.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >io_li..</text>
+</g>
+<g class="func_g" onmouseover="s('mem3:n/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mem3:n/2 (1 samples, 4.76%)</title><rect x="178.6" y="113" width="56.2" height="15.0" fill="rgb(251,62,11)" rx="2" ry="2" />
+<text text-anchor="" x="181.57" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mem3:..</text>
+</g>
+<g class="func_g" onmouseover="s('all (21 samples, 100%)')" onmouseout="c()" onclick="zoom(this)">
+<title>all (21 samples, 100%)</title><rect x="10.0" y="225" width="1180.0" height="15.0" fill="rgb(209,72,36)" rx="2" ry="2" />
+<text text-anchor="" x="13.00" y="235.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  ></text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb:new_response/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb:new_response/1 (1 samples, 4.76%)</title><rect x="684.3" y="145" width="56.2" height="15.0" fill="rgb(239,82,32)" rx="2" ry="2" />
+<text text-anchor="" x="687.29" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochi..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_util:nibble_to_hex/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_util:nibble_to_hex/1   (1 samples, 4.76%)</title><rect x="291.0" y="97" width="56.1" height="15.0" fill="rgb(244,2,14)" rx="2" ry="2" />
+<text text-anchor="" x="293.95" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('mem3_util:-downcast/1-lc$^0/1-0-/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mem3_util:-downcast/1-lc$^0/1-0-/1   (1 samples, 4.76%)</title><rect x="178.6" y="97" width="56.2" height="15.0" fill="rgb(209,161,39)" rx="2" ry="2" />
+<text text-anchor="" x="181.57" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mem3_..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_httpd:send_response/4 (14 samples, 66.67%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_httpd:send_response/4 (14 samples, 66.67%)</title><rect x="403.3" y="177" width="786.7" height="15.0" fill="rgb(241,195,28)" rx="2" ry="2" />
+<text text-anchor="" x="406.33" y="187.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch_httpd:send_response/4</text>
+</g>
+<g class="func_g" onmouseover="s('chttpd_db:db_doc_req/3 (3 samples, 14.29%)')" onmouseout="c()" onclick="zoom(this)">
+<title>chttpd_db:db_doc_req/3 (3 samples, 14.29%)</title><rect x="66.2" y="177" width="168.6" height="15.0" fill="rgb(243,107,46)" rx="2" ry="2" />
+<text text-anchor="" x="69.19" y="187.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >chttpd_db:db_doc_req/3</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_request:server_headers/0 (4 samples, 19.05%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_request:server_headers/0 (4 samples, 19.05%)</title><rect x="796.7" y="129" width="224.7" height="15.0" fill="rgb(226,221,4)" rx="2" ry="2" />
+<text text-anchor="" x="799.67" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochiweb_request:server_heade..</text>
+</g>
+<g class="func_g" onmouseover="s('chttpd_db:send_doc_efficiently/4 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>chttpd_db:send_doc_efficiently/4 (1 samples, 4.76%)</title><rect x="291.0" y="177" width="56.1" height="15.0" fill="rgb(216,178,44)" rx="2" ry="2" />
+<text text-anchor="" x="293.95" y="187.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >chttp..</text>
+</g>
+<g class="func_g" onmouseover="s('chttpd:header_value/3 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>chttpd:header_value/3 (1 samples, 4.76%)</title><rect x="10.0" y="145" width="56.2" height="15.0" fill="rgb(205,121,38)" rx="2" ry="2" />
+<text text-anchor="" x="13.00" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >chttp..</text>
+</g>
+<g class="func_g" onmouseover="s('lists:map/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>lists:map/2 (1 samples, 4.76%)</title><rect x="122.4" y="129" width="56.2" height="15.0" fill="rgb(239,186,42)" rx="2" ry="2" />
+<text text-anchor="" x="125.38" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >lists..</text>
+</g>
+<g class="func_g" onmouseover="s('rexi:cast_msg/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>rexi:cast_msg/1   (1 samples, 4.76%)</title><rect x="122.4" y="81" width="56.2" height="15.0" fill="rgb(249,192,26)" rx="2" ry="2" />
+<text text-anchor="" x="125.38" y="91.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >rexi:..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_doc:revid_to_str/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_doc:revid_to_str/1 (1 samples, 4.76%)</title><rect x="234.8" y="129" width="56.2" height="15.0" fill="rgb(230,113,50)" rx="2" ry="2" />
+<text text-anchor="" x="237.76" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_doc:to_json_rev/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_doc:to_json_rev/2 (1 samples, 4.76%)</title><rect x="291.0" y="145" width="56.1" height="15.0" fill="rgb(244,33,36)" rx="2" ry="2" />
+<text text-anchor="" x="293.95" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('chttpd:etag_match/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>chttpd:etag_match/2 (1 samples, 4.76%)</title><rect x="10.0" y="161" width="56.2" height="15.0" fill="rgb(245,122,54)" rx="2" ry="2" />
+<text text-anchor="" x="13.00" y="171.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >chttp..</text>
+</g>
+<g class="func_g" onmouseover="s('gb_trees:insert/3   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>gb_trees:insert/3   (1 samples, 4.76%)</title><rect x="1077.6" y="97" width="56.2" height="15.0" fill="rgb(214,222,52)" rx="2" ry="2" />
+<text text-anchor="" x="1080.62" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >gb_tr..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_httpd:no_resp_conn_header/1 (3 samples, 14.29%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_httpd:no_resp_conn_header/1 (3 samples, 14.29%)</title><rect x="403.3" y="145" width="168.6" height="15.0" fill="rgb(231,31,11)" rx="2" ry="2" />
+<text text-anchor="" x="406.33" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch_httpd:no_resp_c..</text>
+</g>
+<g class="func_g" onmouseover="s('fabric_doc_open:go/3 (3 samples, 14.29%)')" onmouseout="c()" onclick="zoom(this)">
+<title>fabric_doc_open:go/3 (3 samples, 14.29%)</title><rect x="66.2" y="145" width="168.6" height="15.0" fill="rgb(214,75,52)" rx="2" ry="2" />
+<text text-anchor="" x="69.19" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >fabric_doc_open:go/3</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_headers:get_value/2 (2 samples, 9.52%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_headers:get_value/2 (2 samples, 9.52%)</title><rect x="571.9" y="129" width="112.4" height="15.0" fill="rgb(212,135,19)" rx="2" ry="2" />
+<text text-anchor="" x="574.90" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochiweb_head..</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_headers:make/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_headers:make/1   (1 samples, 4.76%)</title><rect x="684.3" y="129" width="56.2" height="15.0" fill="rgb(233,159,48)" rx="2" ry="2" />
+<text text-anchor="" x="687.29" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochi..</text>
+</g>
+<g class="func_g" onmouseover="s('lists:do_flatten/2   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>lists:do_flatten/2   (1 samples, 4.76%)</title><rect x="965.2" y="113" width="56.2" height="15.0" fill="rgb(210,0,52)" rx="2" ry="2" />
+<text text-anchor="" x="968.24" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >lists..</text>
+</g>
+<g class="func_g" onmouseover="s('string:to_lower_char/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>string:to_lower_char/1   (1 samples, 4.76%)</title><rect x="515.7" y="113" width="56.2" height="15.0" fill="rgb(214,152,49)" rx="2" ry="2" />
+<text text-anchor="" x="518.71" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >strin..</text>
+</g>
+<g class="func_g" onmouseover="s('io_lib:format/2 (3 samples, 14.29%)')" onmouseout="c()" onclick="zoom(this)">
+<title>io_lib:format/2 (3 samples, 14.29%)</title><rect x="796.7" y="97" width="168.5" height="15.0" fill="rgb(224,59,8)" rx="2" ry="2" />
+<text text-anchor="" x="799.67" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >io_lib:format/2</text>
+</g>
+<g class="func_g" onmouseover="s('eflame:apply1/3 (21 samples, 100.00%)')" onmouseout="c()" onclick="zoom(this)">
+<title>eflame:apply1/3 (21 samples, 100.00%)</title><rect x="10.0" y="193" width="1180.0" height="15.0" fill="rgb(222,179,38)" rx="2" ry="2" />
+<text text-anchor="" x="13.00" y="203.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >eflame:apply1/3</text>
+</g>
+<g class="func_g" onmouseover="s('(0.656.0) (21 samples, 100.00%)')" onmouseout="c()" onclick="zoom(this)">
+<title>(0.656.0) (21 samples, 100.00%)</title><rect x="10.0" y="209" width="1180.0" height="15.0" fill="rgb(229,88,37)" rx="2" ry="2" />
+<text text-anchor="" x="13.00" y="219.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >(0.656.0)</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_headers:lookup/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_headers:lookup/2 (1 samples, 4.76%)</title><rect x="10.0" y="113" width="56.2" height="15.0" fill="rgb(240,44,32)" rx="2" ry="2" />
+<text text-anchor="" x="13.00" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochi..</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_request:respond/2 (9 samples, 42.86%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_request:respond/2 (9 samples, 42.86%)</title><rect x="684.3" y="161" width="505.7" height="15.0" fill="rgb(236,212,33)" rx="2" ry="2" />
+<text text-anchor="" x="687.29" y="171.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochiweb_request:respond/2</text>
+</g>
+<g class="func_g" onmouseover="s('couch_util:to_hex/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_util:to_hex/1   (1 samples, 4.76%)</title><rect x="234.8" y="113" width="56.2" height="15.0" fill="rgb(249,61,1)" rx="2" ry="2" />
+<text text-anchor="" x="237.76" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('fabric_util:-submit_jobs/4-fun-0-/4 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>fabric_util:-submit_jobs/4-fun-0-/4 (1 samples, 4.76%)</title><rect x="122.4" y="113" width="56.2" height="15.0" fill="rgb(247,121,52)" rx="2" ry="2" />
+<text text-anchor="" x="125.38" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >fabri..</text>
+</g>
+<g class="func_g" onmouseover="s('chttpd_db:send_doc/3 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>chttpd_db:send_doc/3 (1 samples, 4.76%)</title><rect x="234.8" y="177" width="56.2" height="15.0" fill="rgb(222,78,47)" rx="2" ry="2" />
+<text text-anchor="" x="237.76" y="187.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >chttp..</text>
+</g>
+<g class="func_g" onmouseover="s('gb_trees:insert/3 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>gb_trees:insert/3 (1 samples, 4.76%)</title><rect x="740.5" y="97" width="56.2" height="15.0" fill="rgb(226,188,35)" rx="2" ry="2" />
+<text text-anchor="" x="743.48" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >gb_tr..</text>
+</g>
+<g class="func_g" onmouseover="s('string:-to_lower/1-lc$^0/1-0-/1   (2 samples, 9.52%)')" onmouseout="c()" onclick="zoom(this)">
+<title>string:-to_lower/1-lc$^0/1-0-/1   (2 samples, 9.52%)</title><rect x="403.3" y="129" width="112.4" height="15.0" fill="rgb(227,59,4)" rx="2" ry="2" />
+<text text-anchor="" x="406.33" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >string:-to_lo..</text>
+</g>
+<g class="func_g" onmouseover="s('io_lib_format:build/3 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>io_lib_format:build/3 (1 samples, 4.76%)</title><rect x="796.7" y="81" width="56.2" height="15.0" fill="rgb(208,144,41)" rx="2" ry="2" />
+<text text-anchor="" x="799.67" y="91.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >io_li..</text>
+</g>
+<g class="func_g" onmouseover="s('gb_trees:insert_1/4   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>gb_trees:insert_1/4   (1 samples, 4.76%)</title><rect x="740.5" y="81" width="56.2" height="15.0" fill="rgb(205,40,20)" rx="2" ry="2" />
+<text text-anchor="" x="743.48" y="91.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >gb_tr..</text>
+</g>
+<g class="func_g" onmouseover="s('io_lib_format:collect/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>io_lib_format:collect/2 (1 samples, 4.76%)</title><rect x="909.0" y="65" width="56.2" height="15.0" fill="rgb(219,212,53)" rx="2" ry="2" />
+<text text-anchor="" x="912.05" y="75.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >io_li..</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_request:start_response/2 (5 samples, 23.81%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_request:start_response/2 (5 samples, 23.81%)</title><rect x="740.5" y="145" width="280.9" height="15.0" fill="rgb(210,214,35)" rx="2" ry="2" />
+<text text-anchor="" x="743.48" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochiweb_request:start_response/2</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_headers:get_value/2 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_headers:get_value/2 (1 samples, 4.76%)</title><rect x="10.0" y="129" width="56.2" height="15.0" fill="rgb(252,168,28)" rx="2" ry="2" />
+<text text-anchor="" x="13.00" y="139.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochi..</text>
+</g>
+<g class="func_g" onmouseover="s('string:-to_lower/1-lc$^0/1-0-/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>string:-to_lower/1-lc$^0/1-0-/1 (1 samples, 4.76%)</title><rect x="628.1" y="97" width="56.2" height="15.0" fill="rgb(229,137,9)" rx="2" ry="2" />
+<text text-anchor="" x="631.10" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >strin..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_util:get_value/3   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_util:get_value/3   (1 samples, 4.76%)</title><rect x="347.1" y="145" width="56.2" height="15.0" fill="rgb(233,61,53)" rx="2" ry="2" />
+<text text-anchor="" x="350.14" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_headers:lookup/2 (2 samples, 9.52%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_headers:lookup/2 (2 samples, 9.52%)</title><rect x="571.9" y="113" width="112.4" height="15.0" fill="rgb(210,155,18)" rx="2" ry="2" />
+<text text-anchor="" x="574.90" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochiweb_head..</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_headers:default/3 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_headers:default/3 (1 samples, 4.76%)</title><rect x="740.5" y="113" width="56.2" height="15.0" fill="rgb(231,36,4)" rx="2" ry="2" />
+<text text-anchor="" x="743.48" y="123.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochi..</text>
+</g>
+<g class="func_g" onmouseover="s('string:-to_lower/1-lc$^0/1-0-/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>string:-to_lower/1-lc$^0/1-0-/1   (1 samples, 4.76%)</title><rect x="571.9" y="97" width="56.2" height="15.0" fill="rgb(245,139,46)" rx="2" ry="2" />
+<text text-anchor="" x="574.90" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >strin..</text>
+</g>
+<g class="func_g" onmouseover="s('string:to_lower_char/1   (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>string:to_lower_char/1   (1 samples, 4.76%)</title><rect x="1133.8" y="81" width="56.2" height="15.0" fill="rgb(254,121,2)" rx="2" ry="2" />
+<text text-anchor="" x="1136.81" y="91.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >strin..</text>
+</g>
+<g class="func_g" onmouseover="s('string:-to_lower/1-lc$^0/1-0-/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>string:-to_lower/1-lc$^0/1-0-/1 (1 samples, 4.76%)</title><rect x="1133.8" y="97" width="56.2" height="15.0" fill="rgb(207,173,20)" rx="2" ry="2" />
+<text text-anchor="" x="1136.81" y="107.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >strin..</text>
+</g>
+<g class="func_g" onmouseover="s('couch_doc:rev_to_str/1 (1 samples, 4.76%)')" onmouseout="c()" onclick="zoom(this)">
+<title>couch_doc:rev_to_str/1 (1 samples, 4.76%)</title><rect x="234.8" y="145" width="56.2" height="15.0" fill="rgb(222,6,22)" rx="2" ry="2" />
+<text text-anchor="" x="237.76" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >couch..</text>
+</g>
+<g class="func_g" onmouseover="s('mochiweb_request:should_close/1 (2 samples, 9.52%)')" onmouseout="c()" onclick="zoom(this)">
+<title>mochiweb_request:should_close/1 (2 samples, 9.52%)</title><rect x="571.9" y="145" width="112.4" height="15.0" fill="rgb(215,25,24)" rx="2" ry="2" />
+<text text-anchor="" x="574.90" y="155.5" font-size="12" font-family="Verdana" fill="rgb(0,0,0)"  >mochiweb_requ..</text>
+</g>
+</svg>

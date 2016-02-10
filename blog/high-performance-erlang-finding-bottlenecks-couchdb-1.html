@@ -1,0 +1,560 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>High Performance Erlang - Finding Bottlenecks in a CouchDB Cluster #1</title>
+  <meta name="author" content="Robert Kowalski" />
+  <!-- Homepage CSS -->
+  <meta name="google-site-verification" content="vzd_Qx8aTVcPM4CvUaiUc4dwGtU5enYVAqYotJEdYjY" />
+  <link rel="stylesheet" href="/assets/css/styles-min.css" type="text/css" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <link rel="alternate" type="application/atom+xml" title="kowalski.gd atom feed" href="/atom.xml" />
+  <link rel="alternate" type="application/rss+xml" title="kowalski.gd RSS feed" href="/rss.xml">
+  <link rel="canonical" href="http://kowalski.gd">
+</head>
+<body>
+
+  <div class="site">
+    <div class="title">
+      <a href="/">robert kowalski</a>
+
+      <!--a class="extra" href="/archive.html">Archive</a-->
+      <!--a class="extra" href="">Pages</a-->
+      <!--a class="extra" href="/categories.html">Categories</a-->
+      <!--a class="extra" href="/tags.html">Tags</a-->
+      <a class="extra" href="http://theclibook.com">The CLI Book</a>
+      <a class="extra" href="/imprint.html">Impressum</a>
+    </div>
+
+    
+<div id="post">
+  <h1>High Performance Erlang - Finding Bottlenecks in a CouchDB Cluster #1</h1>
+  <p class="meta">
+    10 February 2016 
+    
+  </p>
+  <p>Welcome to High Performance Erlang!</p>
+
+<p><em>High Performance Erlang</em> is a series for developers who want
+to deliver the best user experience for their applications. We will take a look
+at different Erlang Open Source projects and improve their performance. The
+articles are based on real world issues and explains how we fixed them.</p>
+
+<h2>Why Performance Matters</h2>
+
+<p>You might ask yourself: why should I care about performance? There are a lot of
+reasons why we should care! When we are running an online shop the performance
+of our shop will directly increase or decrease your revenue: Amazon found out
+that 100ms of added latency cost them 1% of their profit. Google made a
+similar observation in their tests:
+<a href="http://glinden.blogspot.de/2006/11/marissa-mayer-at-web-20.html">a page that took .5 seconds longer had 20% less traffic and revenue</a>. Mozilla increased the page load time for their Firefox
+download page and was able to
+<a href="https://blog.mozilla.org/metrics/2010/04/05/firefox-page-load-speed-%E2%80%93-part-ii/">increase their download conversion by 15% — which resulted in 60 million more downloads per year</a>! Better performance will also result in less
+operational costs for our services as we need less servers and resources to
+run our business, especially when our deployment got a decent size.</p>
+
+<p>Other examples where milliseconds matter are Ad trading and High-frequency
+trading. But even for a SAAS business with a freemium model performance is a
+crucial feature, as a successful sale results from customer satisfaction over
+time and a fast responsive service is an <a href="http://services.google.com/fh/files/blogs/google_delayexp.pdf">important corner stone of satisfaction</a>.
+Google’s search service even takes the performance of a site into account when
+<a href="http://googlewebmastercentral.blogspot.com/2010/04/using-site-speed-in-web-search-ranking.html">deciding on the rank of search results</a>.</p>
+
+<h2>Performance optimising Erlang</h2>
+
+<p>Our sample application today will be Apache CouchDB. We will work through
+hands-on exercises based with real live examples.</p>
+
+<p>We will need to compile CouchDB in order to hack on it. I will list the
+needed steps required for OSX and Ubuntu. If you already have compiled
+CouchDB 2 on your system you can continue with the section <a href="#Siege">“Siege“</a>.</p>
+
+<h3>Install Dependencies — Ubuntu</h3>
+
+<p>To compile CouchDB 2 on Ubuntu Trusty I had to install these dependencies:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ sudo apt-get install build-essential erlang-base \
+  erlang-dev erlang-manpages erlang-eunit erlang-nox \
+  libicu-dev libmozjs185-dev libcurl4-openssl-dev \
+  pkg-config
+</code></pre></div>
+<h3>Install Dependencies — OSX</h3>
+
+<p>OSX users have to install the Command Line Tools:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ xcode-select --install
+</code></pre></div>
+<p>After installing the Command Line Tools we have to install the missing dependencies:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ brew install autoconf autoconf-archive automake libtool \
+  erlang icu4c spidermonkey curl pkg-config
+</code></pre></div>
+<p><a id="Siege"></a></p>
+
+<h3>Siege</h3>
+
+<p>We’ll also install <code>siege</code> to run a benchmark later in the article:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ brew install siege          # OSX users
+$ sudo apt-get install siege  # Linux
+</code></pre></div>
+<h3>Setting up CouchDB</h3>
+
+<p>Clone the development repository with our development branch:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ git clone -b high-perf-erlang-1 https://github.com/robertkowalski/couchdb
+</code></pre></div>
+<p>Go to the CouchDB repo:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ cd couchdb
+</code></pre></div>
+<p>Run <code>./configure</code> with <code>--disable-docs --disable-fauxton</code> to pull
+in all the sub-repositories:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ ./configure --disable-docs --disable-fauxton
+</code></pre></div>
+<p>Compile the source with <code>make</code>:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ make
+</code></pre></div>
+<p>We can try to boot a cluster now.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">./dev/run --with-admin-party-please
+</code></pre></div>
+<p>CouchDB should output something like this:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">[ * ] Setup environment ... ok
+[ * ] Ensure CouchDB is built ... ok
+[ * ] Prepare configuration files ... ok
+[ * ] Start node node1 ... ok
+[ * ] Start node node2 ... ok
+[ * ] Start node node3 ... ok
+[ * ] Check node at http://127.0.0.1:15984/ ... failed: [Errno socket error] [Errno 111] Connection refused
+[ * ] Check node at http://127.0.0.1:25984/ ... ok
+[ * ] Check node at http://127.0.0.1:35984/ ... ok
+[ * ] Check node at http://127.0.0.1:15984/ ... ok
+[ * ] Developers cluster is set up at http://127.0.0.1:15984.
+Admin username: Admin Party!
+Password: You do not need any password.
+Time to hack! ...
+</code></pre></div>
+<p>Great! In another terminal window we can test our installation by sending a HTTP request to the database:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ curl http://127.0.0.1:15984
+{&quot;couchdb&quot;:&quot;Welcome&quot;,&quot;version&quot;:&quot;a06d4c7&quot;,&quot;vendor&quot;:{&quot;name&quot;:&quot;The Apache Software Foundation&quot;}}
+</code></pre></div>
+<p>Before we start analysing, we create a test database and document:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ curl -XPUT http://127.0.0.1:15984/animals
+{&quot;ok&quot;:true}
+$ curl -XPUT http://127.0.0.1:15984/animals/cat -d &#39;{&quot;name&quot;: &quot;gizmo&quot;}&#39;
+{&quot;ok&quot;:true,&quot;id&quot;:&quot;cat&quot;,&quot;rev&quot;:&quot;1-7becc1049568795707afe8c7d0c65aa3&quot;}
+</code></pre></div>
+<p>Awesome! CouchDB is up and running! Don’t forget to stop the server as we are going to make
+changes to CouchDB now.</p>
+
+<h2>The Measure-Learn-Refactor-Loop</h2>
+
+<p>During the article we will follow an approach that I call the &quot;Measure-Learn-Refactor-Loop&quot;.</p>
+
+<div style="text-align: center; margin: 40px;">
+  <img src="/assets/data/high-perf-erlang-1/measure-learn-refactor.png" />
+</div>
+
+<p>As a first step we will investigate — right after a short initial analysis. Compared to an approach where we would write
+long and detailed test plans upfront we get immediate feedback on our assumptions. Instead of trying to solve our
+performance issues in a waterfall-like way, we will keep on iterating on our insights and learnings. Based on our first
+insights we can make first decisions and spend our time in the most efficient way.</p>
+
+<p>You can’t fix problems you are not aware of. Just if we have identified a bottleneck in our application we are able to fix it. To confirm an improvement we will measure
+again and are (hopefully!) be able to confirm a performance improvement. The new measurement will additionally lead to new
+insights about new potential bottlenecks. The <em>Measure-Learn-Refactor-Loop</em>.</p>
+
+<h3>Decide on a component</h3>
+
+<p>No one can take a look on everything at once in a large, grown application.
+Most of the time we will look through a small window on specific parts of our
+system. The more the specific components are used, the more overall impact we
+will have. At the beginning it makes sense to start with the low-hanging
+fruits which usually have this big overall impact.</p>
+
+<p>Applications using CouchDB have probably a read-heavy usage pattern, because
+that is a use case where CouchDB really shines. This might be different for
+the applications you are trying to improve after reading the article, so you
+should think a few moments about your application.</p>
+
+<h3>Erlang in flames — Measuring with Flamegraphs</h3>
+
+<p>CPU Flamegraphs are an excellent way to visualise where a program spends the
+most time and where the hot paths of the code are located. Here is an example
+flamegraph showing a request of the Mochiweb webserver:</p>
+
+<p><a href="/assets/data/erlang-perf/mochi-flame-patched.svg">
+  <img src="/assets/data/erlang-perf/mochi-flame-patched.svg" alt="Mochiweb">
+</a></p>
+
+<p>100% of the width of the box equals 100% of the spent CPU time.</p>
+
+<p>The y-axis
+shows the stack depth: <code>bench_web_loop/2</code> calls two functions:
+<code>mochiweb_request:get/2</code> and <code>mochiweb_request:respond/2</code>, which each call
+other functions afterwards. The called functions are displayed on top.
+We see in our example that <code>mochiweb_request:respond/2</code> calls
+<code>mochiweb_request:format_response_header/2</code> which then calls four other functions.</p>
+
+<p>Wide rectangles in the flamegraph signal functions
+which consume more time. <code>mochiweb_request:respond/2</code> consumes more CPU time
+than <code>mochiweb_request:get/2</code>.
+To make sense of the shown flamegraph, it helps to take a look at the
+<a href="https://github.com/mochi/mochiweb/blob/f01872e2ac30e21a5bb41765fb14f49ec026be1e/support/templates/mochiwebapp_skel/src/mochiapp_web.erl#L26-L31">corresponding sourcecode of the sample app used</a> and the <a href="https://github.com/mochi/mochiweb/blob/bd6ae7cbb371666a1f68115056f7b30d13765782/src/mochiweb_request.erl#L339">underlying webserver code</a>.</p>
+
+<p>We can also get additional data by hovering the boxes in the <a href="/assets/data/erlang-perf/mochi-flame-patched.svg">SVG file</a> and
+clicking on them: the flamegraph for Mochiweb shows that the most time is
+spent in <code>mochiweb_request:respond/2</code>.</p>
+
+<p>A nice module to get the data needed to create Flamegraphs for Erlang applications is <a href="https://github.com/proger/eflame">eflame</a>.</p>
+
+<p>Let’s hook <code>eflame</code> into CouchDB by adding it to the file which defines our dependencies, <code>rebar.config.script</code>:</p>
+<div class="highlight"><pre><code class="language-diff" data-lang="diff"><span class="gh">diff --git a/rebar.config.script b/rebar.config.script</span>
+<span class="gh">index 9f47eeb..8620792 100644</span>
+<span class="gd">--- a/rebar.config.script</span>
+<span class="gi">+++ b/rebar.config.script</span>
+<span class="gu">@@ -60,7 +60,8 @@ DepDescs = [</span>
+ {rexi,             &quot;rexi&quot;,             &quot;a327b7dbeb2b0050f7ca9072047bf8ef2d282833&quot;},
+ {snappy,           &quot;snappy&quot;,           &quot;ce24944752ff3a60ad2710f61d4cf709a1b31863&quot;},
+ {setup,            &quot;setup&quot;,            &quot;b9e1f3b5d5a78a706abb358e17130fb7344567d2&quot;},
+<span class="gd">-{meck,             &quot;meck&quot;,             {tag, &quot;0.8.2&quot;}}</span>
+<span class="gi">+{meck,             &quot;meck&quot;,             {tag, &quot;0.8.2&quot;}},</span>
+<span class="gi">+{eflame,            {url, &quot;https://github.com/proger/eflame&quot;}, &quot;b87703d65590f05069be42eb9ef74040d3c7ecdc&quot;}</span>
+ ],
+
+ BaseUrl = &quot;https://git-wip-us.apache.org/repos/asf/&quot;,
+</code></pre></div>
+<p>We have to run <code>./configure</code> another time to pull in the new module:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ ./configure --disable-docs --disable-fauxton
+</code></pre></div>
+<p>As database clients tend to read a lot from CouchDB, we will take a look at reading documents.
+It sounds like a great area to have a big impact.</p>
+
+<p>CouchDB’s HTTP handler for operations on databases and documents are located in <code>src/chttpd/src/chttpd_db.erl</code>. If a document is requested, it matches <a href="https://github.com/apache/couchdb-chttpd/blob/417679a9cf2277693253d3f9c2ac0e52fa1ba75c/src/chttpd_db.erl#L607-L608">this handler</a>:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">db_req</span><span class="p">(</span><span class="nl">#httpd</span><span class="p">{</span><span class="n">path_parts</span><span class="o">=</span><span class="p">[_,</span> <span class="nv">DocId</span><span class="p">]}</span><span class="o">=</span><span class="nv">Req</span><span class="p">,</span> <span class="nv">Db</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="n">db_doc_req</span><span class="p">(</span><span class="nv">Req</span><span class="p">,</span> <span class="nv">Db</span><span class="p">,</span> <span class="nv">DocId</span><span class="p">);</span>
+</code></pre></div>
+<p>The delegation in the handler <code>db_req/2</code> looks like a good place to create a flamegraph as we have a single entry point.</p>
+
+<p>We use <code>eflame:apply</code>. Our data collection will start from this function:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">db_req</span><span class="p">(</span><span class="nl">#httpd</span><span class="p">{</span><span class="n">path_parts</span><span class="o">=</span><span class="p">[_,</span> <span class="nv">DocId</span><span class="p">]}</span><span class="o">=</span><span class="nv">Req</span><span class="p">,</span> <span class="nv">Db</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="nn">eflame</span><span class="p">:</span><span class="nb">apply</span><span class="p">(</span><span class="k">fun</span> <span class="n">db_doc_req</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="nv">Req</span><span class="p">,</span> <span class="nv">Db</span><span class="p">,</span> <span class="nv">DocId</span><span class="p">]);</span>
+</code></pre></div>
+<p>We should now verify that we have stopped any previously running CouchDB instances.</p>
+
+<p>As we already set up a database <code>animals</code> and test-document <code>cat</code> we can now run some commands that will:</p>
+
+<ol>
+<li>compile the modified CouchDB version</li>
+<li>boot CouchDB</li>
+<li>open a document that was saved in CouchDB (in a separate terminal window)</li>
+<li>convert the output generated by <code>eflame</code> to an SVG-file</li>
+<li>open the SVG in our browser to inspect it</li>
+</ol>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ make                                  # compile the patched version
+$ ./dev/run --with-admin-party-please   # boot dev cluster
+</code></pre></div>
+<p>In another terminal window we enter now:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ curl http://localhost:15984/animals/cat
+</code></pre></div>
+<p>CouchDB answers:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">{&quot;_id&quot;:&quot;cat&quot;,&quot;_rev&quot;:&quot;1-7becc1049568795707afe8c7d0c65aa3&quot;,&quot;name&quot;:&quot;gizmo&quot;}
+</code></pre></div>
+<p>Additionally we got a file called <code>stacks.out</code> in our CouchDB sourcecode directory. It contains the samples
+which we will convert to the graph:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">./src/eflame/stack_to_flame.sh &lt; stacks.out &gt; flame.svg
+</code></pre></div>
+<p>We can open the SVG file using our favourite browser and inspect the
+different areas by clicking on them:</p>
+
+<p><a href="/assets/data/high-perf-erlang-1/flame-before.svg">
+  <img src="/assets/data/high-perf-erlang-1/flame-before.svg" />
+</a></p>
+
+<h3>Learn</h3>
+
+<p>On the left side of the graph we see the node of the cluster retrieving the requested document for us by calling
+<code>chttpd_db:db_doc_req/3</code>. When we hover with our mouse over the horizontal bar we see how long it takes: it takes CouchDB 11.48% of the time to get the document that it will send back to the client soon.</p>
+
+<p>The largest bar in the diagram is located in the middle in the diagram:
+<code>couch_httpd:server_header/0</code> which calls <code>couch_server:get_version/0</code> takes 27.87% of the time.
+Wait... <code>server_header</code> and <code>get_version</code>?</p>
+
+<p>A short search verifies: <a href="https://github.com/robertkowalski/couchdb-couch/blob/a06d4c751491015c72520e62d89578b7290ea0ee/src/couch_httpd.erl#L980">the function</a> adds the current version of CouchDB to the HTTP
+header.</p>
+
+<p><a href="/assets/data/high-perf-erlang-1/terminal-header-arrow.png">
+  <img src="/assets/data/high-perf-erlang-1/terminal-header-arrow.png" />
+</a></p>
+
+<p>CouchDB currently takes more time to put its current version into the
+response-header than for reading a doc from disk!</p>
+
+<p>Let’s take a look at the <code>get_version/0</code> function, which is located in <code>couch/couch_server.erl</code>. The function receives
+a full list of all loaded applications using <code>application:loaded_applications/0</code>:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">get_version</span><span class="p">()</span> <span class="o">-&gt;</span>
+    <span class="nv">Apps</span> <span class="o">=</span> <span class="nn">application</span><span class="p">:</span><span class="nf">loaded_applications</span><span class="p">(),</span>
+    <span class="k">case</span> <span class="nn">lists</span><span class="p">:</span><span class="nf">keysearch</span><span class="p">(</span><span class="n">couch</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nv">Apps</span><span class="p">)</span> <span class="k">of</span>
+    <span class="p">{</span><span class="n">value</span><span class="p">,</span> <span class="p">{_,</span> <span class="p">_,</span> <span class="nv">Vsn</span><span class="p">}}</span> <span class="o">-&gt;</span>
+        <span class="nv">Vsn</span><span class="p">;</span>
+    <span class="n">false</span> <span class="o">-&gt;</span>
+        <span class="s">&quot;0.0.0&quot;</span>
+    <span class="k">end</span><span class="p">.</span>
+</code></pre></div>
+<p>Behind the scenes <code>loaded_applications/0</code> uses an <code>ets:filter</code> which takes a lot of the time. As soon as we have received a result we are running a keysearch on all results.</p>
+
+<h3>Refactor</h3>
+
+<p>One possible solution is to cache the version number, but there is an even simpler, very straightforward way: we can use
+<code>application:get_key/2</code> to receive the version number. The modified <code>get_version/0</code> function looks like this now:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">get_version</span><span class="p">()</span> <span class="o">-&gt;</span>
+    <span class="k">case</span> <span class="nn">application</span><span class="p">:</span><span class="nf">get_key</span><span class="p">(</span><span class="n">couch</span><span class="p">,</span> <span class="n">vsn</span><span class="p">)</span> <span class="k">of</span>
+        <span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="nv">Version</span><span class="p">}</span> <span class="o">-&gt;</span> <span class="nv">Version</span><span class="p">;</span>
+        <span class="n">undefined</span> <span class="o">-&gt;</span> <span class="s">&quot;0.0.0&quot;</span>
+    <span class="k">end</span><span class="p">.</span>
+</code></pre></div>
+<p><strong>Important: before we will continue, we have to remove the <code>eflame:apply/2</code> call that we used to create the flamegraph
+from our <code>db_req</code> handler!</strong></p>
+
+<h3>Closing the circle: confirmation</h3>
+
+<p>Do you remember the graphic with the circle at the beginning of the article? We are now almost at the end of this
+iteration.</p>
+
+<p>I started with benchmarking using my laptop, which is OK in my opinion, especially if you just get started and are not
+sure if you will keep optimising and profiling. But in the long term a separate, dedicated machine just for benchmarking really pays off.</p>
+
+<p>To create reproducible benchmark results following this protocol has been very valuable to me:</p>
+
+<ol>
+<li>Prevent all programs that run in the background from starting, e.g. Dropbox, Google Drive or also the
+indexer that runs on OSX for the file search</li>
+<li>Compile the patched/unpatched version</li>
+<li>Reboot system</li>
+<li>Wait 60 seconds</li>
+<li>Boot CouchDB Cluster, wait 120 seconds</li>
+<li>Run Benchmarking tool</li>
+<li>Wait 90 seconds</li>
+<li>Repeat step 6 and 7 until I we have 10 benchmarks</li>
+</ol>
+
+<p>In order to run the benchmarks I had to tweak my OSX system: OSX only has
+16k available ports and sockets idle per default 15 seconds until they are
+released. I created <code>/etc/sysctl.conf</code> set the timeout to 150ms:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">net.inet.tcp.msl=150
+</code></pre></div>
+<p>I also had to raise the amount of the max open files. I had to create
+<code>/Library/LaunchDaemons/limit.maxfiles.plist</code>:</p>
+<div class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+<span class="cp">&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot;</span>
+<span class="cp">        &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;</span>
+<span class="nt">&lt;plist</span> <span class="na">version=</span><span class="s">&quot;1.0&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;dict&gt;</span>
+    <span class="nt">&lt;key&gt;</span>Label<span class="nt">&lt;/key&gt;</span>
+    <span class="nt">&lt;string&gt;</span>limit.maxfiles<span class="nt">&lt;/string&gt;</span>
+    <span class="nt">&lt;key&gt;</span>ProgramArguments<span class="nt">&lt;/key&gt;</span>
+    <span class="nt">&lt;array&gt;</span>
+      <span class="nt">&lt;string&gt;</span>launchctl<span class="nt">&lt;/string&gt;</span>
+      <span class="nt">&lt;string&gt;</span>limit<span class="nt">&lt;/string&gt;</span>
+      <span class="nt">&lt;string&gt;</span>maxfiles<span class="nt">&lt;/string&gt;</span>
+      <span class="nt">&lt;string&gt;</span>524288<span class="nt">&lt;/string&gt;</span>
+      <span class="nt">&lt;string&gt;</span>524288<span class="nt">&lt;/string&gt;</span>
+    <span class="nt">&lt;/array&gt;</span>
+    <span class="nt">&lt;key&gt;</span>RunAtLoad<span class="nt">&lt;/key&gt;</span>
+    <span class="nt">&lt;true/&gt;</span>
+    <span class="nt">&lt;key&gt;</span>ServiceIPC<span class="nt">&lt;/key&gt;</span>
+    <span class="nt">&lt;false/&gt;</span>
+  <span class="nt">&lt;/dict&gt;</span>
+<span class="nt">&lt;/plist&gt;</span>
+</code></pre></div>
+<p>and reboot.</p>
+
+<p><code>ulimit -a</code> then shows after a reboot:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">core file size          (blocks, -c) 0
+data seg size           (kbytes, -d) unlimited
+file size               (blocks, -f) unlimited
+max locked memory       (kbytes, -l) unlimited
+max memory size         (kbytes, -m) unlimited
+open files                      (-n) 524288
+pipe size            (512 bytes, -p) 1
+stack size              (kbytes, -s) 8192
+cpu time               (seconds, -t) unlimited
+max user processes              (-u) 709
+virtual memory          (kbytes, -v) unlimited
+</code></pre></div>
+<p>(right now I use OSX El Capitan)</p>
+
+<p>After running this protocol for the unpatched and modified version (without
+the <code>eflame:apply</code> call of course!) we should have quite reproducible results,
+as we disabled all background processes that can eat a lot of our CPU power.
+We also don’t have any unfreed memory or zombie processes running as we reboot
+between the benchmarks for the patched and unpatched version.</p>
+
+<p>Running this protocol can be quite boring — so let’s automate most of it!</p>
+
+<p>Automating most of the process has other great improvements next to the fact
+that it makes benchmarking less boring for us: less human errors and most
+parts of our benchmarking process is documented in code for our colleagues.</p>
+
+<p>Here is the script:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="c">#!/bin/sh</span>
+
+<span class="nv">COUCHDB_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/couchdb
+<span class="nv">BENCH_RUN</span><span class="o">=</span><span class="s2">&quot;siege -q -c120 -r400 -b http://127.0.0.1:15984/animals/cat&quot;</span>
+
+sleep 60<span class="p">;</span>
+<span class="nv">$COUCHDB_PATH</span>/dev/run --with-admin-party-please <span class="p">&amp;</span> <span class="nv">pid</span><span class="o">=</span><span class="nv">$!</span>
+sleep 120
+
+<span class="nb">echo</span> <span class="s2">&quot;&quot;</span>
+<span class="nb">echo</span> <span class="s2">&quot;&quot;</span>
+<span class="k">for</span> i in <span class="sb">`</span>seq <span class="m">1</span> 10<span class="sb">`</span><span class="p">;</span>
+<span class="k">do</span>
+  <span class="nb">echo</span> <span class="s2">&quot;Runnig test #$i:&quot;</span>
+  <span class="nv">$BENCH_RUN</span>
+  sleep 90
+<span class="k">done</span>
+
+<span class="nb">kill</span> <span class="nv">$pid</span>
+
+<span class="nb">printf</span> <span class="s1">&#39;\a&#39;</span>  <span class="c"># beep to signal we are finished</span>
+</code></pre></div>
+<p>We should get results for the <a href="/assets/data/high-perf-erlang-1/bench-unoptimized.txt">unpatched version</a> and after a reboot and
+a fresh run of the benchmark script the results for the
+<a href="/assets/data/high-perf-erlang-1/bench-optimized.txt">patched version</a>. We can put the results into a table:</p>
+
+<table>
+<thead>
+<tr><td></td><td>optimized (secs)</td><td>unoptimized (secs)</td></tr>
+</thead>
+<tbody>
+<tr><td>#1</td><td>38,47</td><td>44,61</td></tr>
+<tr><td>#2</td><td>39,87</td><td>43,35</td></tr>
+<tr><td>#3</td><td>39,76</td><td>44,53</td></tr>
+<tr><td>#4</td><td>37,78</td><td>44,88</td></tr>
+<tr><td>#5</td><td>38,16</td><td>44,47</td></tr>
+<tr><td>#6</td><td>40,02</td><td>43,09</td></tr>
+<tr><td>#7</td><td>40,00</td><td>43,37</td></tr>
+<tr><td>#8</td><td>40,11</td><td>44,40</td></tr>
+<tr><td>#9</td><td>39,97</td><td>43,48</td></tr>
+<tr><td>#20</td><td>41,92</td><td>44,63</td></tr>
+<tr><td>SUM (secs)</td><td>396,06</td><td>440,81</td></tr>
+</tbody>
+</table>
+
+<p>We can also visualise the results in a diagram:</p>
+
+<div style="text-align: center; margin: 40px;">
+  <a href="/assets/data/high-perf-erlang-1/graph.png">
+    <img src="/assets/data/high-perf-erlang-1/graph.png" />
+  </a>
+</div>
+
+<p>We see that every run of the patched, optimised version is faster.</p>
+
+<p>Looks like the patched version is about 46 seconds faster if we sum up the times of the almost 500.000
+requests. That’s a lot!</p>
+
+<p>As a last step we also create a new flamegraph.
+The <a href="/assets/data/high-perf-erlang-1/flame-after.svg">new flamegraph</a> should look like this:</p>
+
+<p><a href="/assets/data/high-perf-erlang-1/flame-after.svg">
+  <img src="/assets/data/high-perf-erlang-1/flame-after.svg" />
+</a></p>
+
+<p><code>couch_server:get_version/0</code> was consuming a lot of CPU time before our
+optimisation and isn’t visible any more. As one of the main consumer of CPU
+time got optimised, the graph shows other main consumer now. Creating the second
+flamegraph allows us to verify our benchmark and assumptions on the
+performance improvement. It also shows us immediately the next bottleneck,
+which we will investigate in the next article.</p>
+
+<h2>Wrapping up</h2>
+
+<p>Inefficient lookups are quite common, we often catch them early during a code
+review. Sometimes they slip through the review process which isn’t necessarily
+a problem, but in rare conditions they are located in the hot path, the code
+that gets executed the most often and that makes them harmful. In this case we
+are able to measure an <strong>8%</strong> improvement in performance after the refactor for
+a reading operation. The bottleneck we have found basically affects every HTTP
+request, as CouchDB reports its version not only in case of a read.</p>
+
+<p>If we would have focussed on writing long detailed test plans instead of measuring we
+probably would have focussed on the B-Tree or other parts of the system.
+At least I would have never assumed that getting the version of the current
+CouchDB release is a major performance issue in the project and additionally
+has a very high overall impact.</p>
+
+<p>The second flame graph we created immediately makes the
+next bottleneck visible. We will take a look at it in the next article. The
+original PR for this article is available at
+<a href="https://github.com/apache/couchdb-couch/pull/56">https://github.com/apache/couchdb-couch/pull/56</a>.</p>
+
+<p>Did you like the article? I wrote a book about successful CLI design:
+<a href="http://theclibook.com">http://theclibook.com</a></p>
+
+<p>Apache CouchDB is an Open Source Project under Apache 2.0 License. The code used in this article is from Apache CouchDB, licensed under Apache License, Version 2.0, January 2004. For details, see: <a href="https://github.com/apache/couchdb/blob/master/LICENSE">https://github.com/apache/couchdb/blob/master/LICENSE</a>.</p>
+
+<p><img src="http://vg07.met.vgwort.de/na/788b22edd5224023ad7136844cea158b" width="1" height="1" alt=""></p>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li class="small-bordered">
+        <span class="small-hide">09 Oct 2015&raquo; </span>
+        <a href="/blog/software-development-in-cuba">Software development in Cuba</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">02 Mar 2015&raquo; </span>
+        <a href="/blog/what-happened-while-contributing-to-open-source-on-a-daily-basis-for-one-year">What happened while contributing to Open Source on a daily basis for one year</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">23 Feb 2015&raquo; </span>
+        <a href="/blog/how-to-organize-an-event">How to organize an event?</a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+    <div class="footer">
+      <div class="contact">
+        <p>
+          Robert Kowalski<br />
+          <br />
+          rok@kowalski.gd
+        </p>
+      </div>
+      <div class="contact">
+        <p>
+          <a href="http://github.com/robertkowalski/">github.com/robertkowalski</a><br />
+          <a href="http://twitter.com/robinson_k/">twitter.com/robinson_k</a><br />
+        </p>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+  <script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-28167405-1', 'auto');
+  ga('set', 'anonymizeIp', true);
+  ga('send', 'pageview');
+</script>
+
+
+
+
+</body>
+</html>
+

@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>Cross-Platform-Development mit Titanium</title>
+  <meta name="author" content="Robert Kowalski" />
+  <!-- Homepage CSS -->
+  <meta name="google-site-verification" content="vzd_Qx8aTVcPM4CvUaiUc4dwGtU5enYVAqYotJEdYjY" />
+  <link rel="stylesheet" href="/assets/css/styles-min.css" type="text/css" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <link rel="alternate" type="application/atom+xml" title="kowalski.gd atom feed" href="/atom.xml" />
+  <link rel="alternate" type="application/rss+xml" title="kowalski.gd RSS feed" href="/rss.xml">
+  <link rel="canonical" href="http://kowalski.gd">
+</head>
+<body>
+
+  <div class="site">
+    <div class="title">
+      <a href="/">robert kowalski</a>
+
+      <!--a class="extra" href="/archive.html">Archive</a-->
+      <!--a class="extra" href="">Pages</a-->
+      <!--a class="extra" href="/categories.html">Categories</a-->
+      <!--a class="extra" href="/tags.html">Tags</a-->
+      <a class="extra" href="http://theclibook.com">The CLI Book</a>
+      <a class="extra" href="/imprint.html">Impressum</a>
+    </div>
+
+    
+<div id="post">
+  <h1>Cross-Platform-Development mit Titanium</h1>
+  <p class="meta">
+    30 April 2012 
+    
+  </p>
+  <p>Nachdem ich mir Anfang 2011 schon einmal Titanium von Appcelerator (nur in Bezug auf Android) angesehen hatte, wollte ich mir nun noch einmal ein Bild von Titanium machen. Laut einer Präsentation bei der JavaScript Usergroup und nach Austausch mit Kollegen soll sich seit damals viel getan haben.</p>
+
+<!-- more -->
+
+<p>Ich baue eine kleine App, ausschließlich erst einmal für das iPhone: ein Kollege fotografiert sehr gut und hat einen sehr empfehlenswerten <a href="http://www.flickr.com/photos/zanthia/">flickr-Fotostream</a>. Warum also nicht eine Fotostream App bauen und dabei Titanium besser kennenlernen?</p>
+
+<h2>Entwicklung</h2>
+
+<p>Für Titanium Apps ist JavaScript die Ausgangsbasis.</p>
+
+<p>Titanium Apps benutzen mit Hilfe von JavaScript-Code native iOS oder Android Komponenten, der JavaScript-Code wird von einem JavaScript-Interpreter interpretiert. Das Konzept ist somit etwas anders als bei Phonegap Apps, die in einem WebView ausgeführt werden.</p>
+
+<p>Titanium kann um weitere native Komponenten erweitert werden, die zum Beispiel in Objective C geschrieben sind und über eine Verbindungseinheit in JavaScript besitzen. Dies ist grundsätzlich auch bei Phonegap möglich. Doch wie bereits erwähnt laufen Phonegap Apps hauptsächlich in einem WebView, ohne native UI-Elemente.</p>
+
+<p>Bei Titanium helfen Module beim Gliedern der App. Hier finden die aus CommonJS und auch aus node.js bekannten Module mit <code>exports</code> und <code>require</code> Anwendung.</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="c1">// Definition des Moduls in der ExampleFile.js</span>
+
+<span class="kd">var</span> <span class="nx">exampleModule</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="s2">&quot;I am a Module&quot;</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">exampleModule</span><span class="p">;</span>
+</code></pre></div><div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="c1">// Import und Benutzung in der Foo.js</span>
+
+<span class="kd">var</span> <span class="nx">exampleFunction</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./ExampleFile&#39;</span><span class="p">);</span>
+
+<span class="nx">exampleFunction</span><span class="p">();</span> <span class="c1">// =&gt; &quot;I am a Module&quot;</span>
+</code></pre></div>
+<p>Die einzelnen Module lassen sich dann bestimmt auch relativ gut Unit-Testen. Ein festes Konzept oder Integration von Unit-Tests im Titanium Framework habe ich leider nicht entdecken können.</p>
+
+<p>Im allgemeinen war der Prototyp relativ schnell gehackt. Die App ist, ohne auf jedes Detail einzugehen, im Prinzip ein AJAX-Request und die Erstellung einer Coverflow-Gallerie.</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="c1">// AJAX Client</span>
+<span class="kd">var</span> <span class="nx">xhr</span> <span class="o">=</span> <span class="nx">Titanium</span><span class="p">.</span><span class="nx">Network</span><span class="p">.</span><span class="nx">createHTTPClient</span><span class="p">();</span>
+
+<span class="nx">xhr</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+     <span class="c1">// Antwort-JSON verabeiten, Coverflow erstellen,</span>
+     <span class="c1">// Activity Spinner anhalten, Eventhandler registrieren...</span>
+<span class="p">};</span>
+</code></pre></div><div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">view</span> <span class="o">=</span> <span class="nx">Ti</span><span class="p">.</span><span class="nx">UI</span><span class="p">.</span><span class="nx">iOS</span><span class="p">.</span><span class="nx">createCoverFlowView</span><span class="p">({</span>
+    <span class="nx">images</span> <span class="o">:</span> <span class="nx">preview</span><span class="p">,</span>
+    <span class="nx">backgroundColor</span> <span class="o">:</span> <span class="s1">&#39;#000&#39;</span><span class="p">,</span>
+    <span class="nx">top</span><span class="o">:</span> <span class="s1">&#39;30px&#39;</span><span class="p">,</span>
+    <span class="nx">height</span><span class="o">:</span> <span class="s1">&#39;90%&#39;</span>
+<span class="p">});</span>
+
+<span class="nx">view</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;change&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">labelTitle</span><span class="p">.</span><span class="nx">setText</span><span class="p">(</span><span class="nx">images</span><span class="p">[</span><span class="nx">e</span><span class="p">.</span><span class="nx">index</span><span class="p">].</span><span class="nx">title</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="nx">view</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Detail-View öffnen etc.</span>
+<span class="p">});</span>
+</code></pre></div>
+<p>Der Event-Listener <code>change</code> kümmert sich um neue Titel bei wischen über die Bilder - der Event-Listener, der auf das <code>click</code> -Event lauscht, ruft eine Detailseite auf, die eine etwas größere Version des Bildes anzeigt.</p>
+
+<h2>iOS &amp; Android - alles gleich?</h2>
+
+<p>Auch wenn Titanium mit &quot;einer Codebasis für viele Plattformen&quot; wirbt, gibt es dennoch einige Unterschiede.</p>
+
+<p>Die Kompilierungszeit ist mit dem iOS SDK und iOS Emulator sehr angenehm im Gegensatz zu Android, was aber an dem Android Emulator und des Kompilierungvorgangs des Android SDKs liegt und kein Verschulden von Titanium ist.</p>
+
+<p>Es gibt für iOS einige UI-Komponenten, die nicht für Android verfügbar sind. Will man also mit der exakt gleichen Codebasis Android und iOS bedienen, muss man sich für die Android Version etwas anderes einfallen lassen und eine Sondervariante mit Weiche im Code einbauen.</p>
+
+<h2>Fazit</h2>
+
+<p>Innerhalb von ein paar Stunden hatte ich Titanium installiert, meinen Flickr API Key beantragt und den ersten Prototypen zur Photo-App von Zanthia&#39;s Photostream fertig. Der von mir benutzte Coverflow für die Bildergalerie ist für Android nicht verfügbar - hier müsste für Android eine andere Lösung gefunden werden.</p>
+
+<p>Die App war schnell fertig und läuft super. Das iOS Element &quot;Coverflow&quot; hätte man mit HTML5 nicht so performant realisieren können.</p>
+
+<p>Für Prototypen, sehr kleine Apps oder Teams mit zusätzlichen nativen Entwicklern also durchaus eine Alternative.</p>
+
+<h2>Demovideo</h2>
+
+<iframe width="420" height="315" src="http://www.youtube.com/embed/ofZ1461cpf8" frameborder="0" allowfullscreen></iframe>
+
+<h2>Sourcecode</h2>
+
+<p>Wie immer gibt es den
+<a href="https://github.com/robertkowalski/titanium-flickr/blob/master/Resources/ui/handheld/ApplicationWindow.js" rel="nofollow">Sourcecode auf github</a>. Meinen Flickr API Key habe ich aus dem Code entfernt.</p>
+
+<p><img src="http://vg09.met.vgwort.de/na/aae1049f37ad4d83913ba9bde1d02c69" width="1" height="1" alt=""></p>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li class="small-bordered">
+        <span class="small-hide">10 Feb 2016&raquo; </span>
+        <a href="/blog/high-performance-erlang-finding-bottlenecks-couchdb-1">High Performance Erlang - Finding Bottlenecks in a CouchDB Cluster #1</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">09 Oct 2015&raquo; </span>
+        <a href="/blog/software-development-in-cuba">Software development in Cuba</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">02 Mar 2015&raquo; </span>
+        <a href="/blog/what-happened-while-contributing-to-open-source-on-a-daily-basis-for-one-year">What happened while contributing to Open Source on a daily basis for one year</a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+    <div class="footer">
+      <div class="contact">
+        <p>
+          Robert Kowalski<br />
+          <br />
+          rok@kowalski.gd
+        </p>
+      </div>
+      <div class="contact">
+        <p>
+          <a href="http://github.com/robertkowalski/">github.com/robertkowalski</a><br />
+          <a href="http://twitter.com/robinson_k/">twitter.com/robinson_k</a><br />
+        </p>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+  <script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-28167405-1', 'auto');
+  ga('set', 'anonymizeIp', true);
+  ga('send', 'pageview');
+</script>
+
+
+
+
+</body>
+</html>
+

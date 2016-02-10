@@ -1,0 +1,403 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>Tutorial: Die erste App mit EnyoJS</title>
+  <meta name="author" content="Robert Kowalski" />
+  <!-- Homepage CSS -->
+  <meta name="google-site-verification" content="vzd_Qx8aTVcPM4CvUaiUc4dwGtU5enYVAqYotJEdYjY" />
+  <link rel="stylesheet" href="/assets/css/styles-min.css" type="text/css" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <link rel="alternate" type="application/atom+xml" title="kowalski.gd atom feed" href="/atom.xml" />
+  <link rel="alternate" type="application/rss+xml" title="kowalski.gd RSS feed" href="/rss.xml">
+  <link rel="canonical" href="http://kowalski.gd">
+</head>
+<body>
+
+  <div class="site">
+    <div class="title">
+      <a href="/">robert kowalski</a>
+
+      <!--a class="extra" href="/archive.html">Archive</a-->
+      <!--a class="extra" href="">Pages</a-->
+      <!--a class="extra" href="/categories.html">Categories</a-->
+      <!--a class="extra" href="/tags.html">Tags</a-->
+      <a class="extra" href="http://theclibook.com">The CLI Book</a>
+      <a class="extra" href="/imprint.html">Impressum</a>
+    </div>
+
+    
+<div id="post">
+  <h1>Tutorial: Die erste App mit EnyoJS</h1>
+  <p class="meta">
+    21 March 2012 
+    
+  </p>
+  <p>EnyoJS ist ein JavaScript Framework, welches ursprünglich von HP für das Touchpad Tablet zur Erstellung von webOS-Apps benutzt wurde.
+Mittlerweile ist es als Open-Source Cross-Platform-Lösung (Apache Lizenz) der Öffentlichkeit zugänglich gemacht worden und erinnert in der JavaScript lastigen Handhabung eher an Sencha statt an markup-lastige Frameworks wie jQuery Mobile. Mit Onyx ist einen Monat nach dem Core-Framework nun der erste Teil von Widgets für Enyo released worden.</p>
+
+<p><img style="position:relative;margin:10px;height:430px;float:right;" src="/assets/images/enyo_blog_article/3_-_App.png" alt="Screen Phonegap" /> Wir werden eine kleine App mit Hilfe von Enyo bauen und uns dabei das Framework genauer anschauen. Ziel ist eine App (Phonegap) für iPhone und Android. Doch auch deren Browser und letzendlich Desktop PCs können bedient werden.</p>
+
+<p>Das heutige Thema wird vor allem die Weintrinker freuen, denn wir werden eine Weinverwaltung für unseren Weinkeller bauen. Natürlich werden auch die ganz frisch erschienenen Onyx Widgets benutzt. Wer kein Weintrinker ist, der kann die App leicht zu einer Verwaltung für andere Dinge adaptieren.</p>
+
+<!-- more -->
+
+<p>Enyo möchte mit dem Konzept von sogenannten <em>Kinds</em> Modularität und Kapselung erreichen. Mit Enyo entwickelt man zuerst im Web-Browser, später macht man dann Feinanpassungen für die jeweiligen Plattformen auf den jeweiligen Endgeräten wie zum Beispiel Smartphone oder Tablet.</p>
+
+<h2>Hallo Enyo</h2>
+
+<p>Die einfachste Anwendung, die in Enyo denkbar ist, wäre wie in eigentlich allen Sprachen eine einfache &quot;Hello World&quot; Anwendung. Es liegt für jeden Teil des Tutorials Sourcecode vor, zur Referenz und im ersten Schritt als Template für unsere App, um schnell starten zu können.</p>
+
+<p><a href="https://github.com/robertkowalski/enyoJS-Bootcamp" rel="nofollow">github repository</a>.</p>
+
+<p><a href="https://github.com/robertkowalski/enyoJS-Bootcamp/downloads" rel="nofollow">github - download as zip/tarball</a>.</p>
+
+<p>Wir starten unsere <code>index.html</code> aus <code>1a - App Template und Hello Enyo</code>.</p>
+
+<p>Mit Hilfe unserer Developer Konsole erstellen wir adhoc ein &quot;Kind&quot; in Enyo:</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="k">new</span> <span class="nx">enyo</span><span class="p">.</span><span class="nx">Control</span><span class="p">({</span><span class="nx">content</span><span class="o">:</span> <span class="s2">&quot;Hi Enyo!&quot;</span><span class="p">}).</span><span class="nx">renderInto</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">);</span>
+</code></pre></div>
+<p><img src="/assets/images/enyo_blog_article/1_-_App_Template_-_Konsole.png" alt="Developer Konsole Screenshot" title="Developer Konsole Screenshot"></p>
+
+<p>welches, wie wir sehen, direkt zu einem div rendert:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;enyo-fit&quot;</span> <span class="na">id=</span><span class="s">&quot;control2&quot;</span><span class="nt">&gt;</span>Hi Enyo!<span class="nt">&lt;/div&gt;</span>
+</code></pre></div>
+<p><img src="/assets/images/enyo_blog_article/1_-_App_Template_-_html_inspector.png" alt="Developer Konsole Screenshot" title="HTML Inspector Screenshot"></p>
+
+<p>Der Befehl <code>renderInto()</code> rendert ein Kind in einen bestimmten DOM-Knoten, in diesem Fall den body unseres HTML-Dokuments.</p>
+
+<p>Nach diesem ersten schnellen, einfachen Einstieg wollen wir einmal ein richtiges Kind schreiben.</p>
+
+<h2>Dependencies mit depends.js</h2>
+
+<p>Wir erstellen schnell eine <code>Bottle.js</code>, die wir in den Ordner <code>source</code>  speichern und eine leere <code>App.css</code> im Ordner <code>style</code>.</p>
+
+<p>Wem dieser und die folgenden Schritte zu lästig sind: keine Bange, einfach das git repository auschecken und mit <code>1b - App Template mit package.js</code> im nächsten Kapitel weitermachen.</p>
+
+<p>Nachdem wir unsere Dateien haben, erweitern wir unser Template um eine <code>package.js</code>. Die <code>package.js</code> wird diese und alle weiteren CSS-Styles und den Sourcecode von unseren Kinds referenzieren. Zusätzlich dazu habe ich die neu erschienenen Onyx-Styles und Kinds hinzugefügt.</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">enyo</span><span class="p">.</span><span class="nx">depends</span><span class="p">(</span>
+  <span class="s2">&quot;./enyo/onyx/onyx.js&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;./enyo/onyx/onyx.css&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;./style/App.css&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;./source/Bottle.js&quot;</span>
+<span class="p">);</span>
+</code></pre></div>
+<p>Enyo wird die Dateien beim Start der Anwendung automatisch laden.</p>
+
+<p>Die <code>package.js</code> laden wir einfach im head unserer <code>index.html</code>, den Rest macht Enyo für uns:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="cp">&lt;!doctype html&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;head&gt;</span>
+    <span class="nt">&lt;title&gt;</span>Enyo App Template<span class="nt">&lt;/title&gt;</span>
+    <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;./enyo/enyo.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+    <span class="nt">&lt;link</span> <span class="na">href=</span><span class="s">&quot;./enyo/enyo.css&quot;</span> <span class="na">rel=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">type=</span><span class="s">&quot;text/css&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;./package.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+  <span class="nt">&lt;/head&gt;</span>
+  <span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;script&gt;</span>
+
+    <span class="nt">&lt;/script&gt;</span>
+  <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div>
+<p>Zu finden ist das ganze unter <code>1b - App Template mit package.js</code> und wird die Basis für all unsere weiteren Experimente sein.</p>
+
+<h2>Die Weinflasche</h2>
+
+<p>Wir wollen nun unser erstes komplettes Kind schreiben. In unserer Weinlagerverwaltung liegen Weinflaschen. Jede Weinflasche stellt eine Entität in unserem Weinkeller dar. Wir modellieren nun also zuerst eine Flasche, jede Flasche hat ein Jahr sowie einen Namen. Zu finden ist alles in <code>2a - Der Wein</code>.</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">enyo</span><span class="p">.</span><span class="nx">kind</span><span class="p">({</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;wine.Bottle&quot;</span><span class="p">,</span>
+  <span class="nx">kind</span><span class="o">:</span> <span class="nx">enyo</span><span class="p">.</span><span class="nx">Control</span><span class="p">,</span>
+  <span class="nx">classes</span><span class="o">:</span> <span class="s2">&quot;onyx&quot;</span><span class="p">,</span>
+  <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;padding: 10px&quot;</span><span class="p">,</span>
+  <span class="nx">published</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">wineYear</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="nx">wineName</span><span class="o">:</span> <span class="s2">&quot;&quot;</span>
+  <span class="p">},</span>
+  <span class="nx">components</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span> <span class="nx">tag</span><span class="o">:</span> <span class="s2">&quot;span&quot;</span><span class="p">,</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;wineYear&quot;</span><span class="p">,</span> <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;margin-right: 10px&quot;</span> <span class="p">},</span>
+    <span class="p">{</span> <span class="nx">tag</span><span class="o">:</span> <span class="s2">&quot;span&quot;</span><span class="p">,</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;wineName&quot;</span><span class="p">,</span> <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;margin-right: 10px&quot;</span> <span class="p">},</span>
+  <span class="p">],</span>
+  <span class="nx">create</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">inherited</span><span class="p">(</span><span class="nx">arguments</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">wineBottleChanged</span><span class="p">();</span>
+  <span class="p">},</span>
+  <span class="nx">wineBottleChanged</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">wineYear</span><span class="p">.</span><span class="nx">setContent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">wineYear</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">wineName</span><span class="p">.</span><span class="nx">setContent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">wineName</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<p>Ein Kind wird in Enyo mit Hilfe von <code>enyo.kind</code> definiert. Dieses Kind hier erbt wiederrum vom Kind <code>enyo.Control</code>. Benannt wurde das Kind <code>wine.Bottle</code>. Der Punkt sorgt hier für ein Namespacing.</p>
+
+<p>Mit <code>classes</code> und <code>style</code> gibt man in Enyo CSS-Klassen beziehungsweise CSS-Styles für die Kinds an.</p>
+
+<p>Kinds können weitere Kinds in sich schachteln. Diese können auch wieder weitere Kinds in sich schachteln.
+Verschachtelte Elemente werden unter <code>components</code> eingetragen.</p>
+
+<p>Wir haben hier unter <code>components</code> zwei Elemente, die als span-Elemente rendern sollen (festgelegt mit <code>tag: &quot;span&quot;</code>).</p>
+
+<p>Die beiden Elemente haben jeweilig die Namen wineYear und wineName, mit denen man später auf sie zugreifen kann. Innerhalb von unserem Kind greift man auf diese Elemente mit Hilfe von <code>this.$.</code> zu. Später dazu mehr.</p>
+
+<p>Beim Erstellen eines Kinds wird die Methode <code>create</code> automatisch aufgerufen. Es gibt auch die Methoden <code>contructor</code> und <code>rendered</code>, die überschrieben werden könnten, aber diese Methoden werden wir hier nicht verwenden.</p>
+
+<p>Wir rufen über die <code>create</code>-Methode per <code>this.wineBottleChanged();</code>  die Methode <code>wineBottleChanged</code> auf, hier passiert sehr viel: wir adressieren mit <code>this.$</code> und den von uns festgelegten Namen unsere Komponenten.</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">wineName</span><span class="p">.</span><span class="nx">setContent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">wineName</span><span class="p">);</span>
+</code></pre></div>
+<p>Wir ändern ihren Inhalt mit Hilfe von <code>setContent</code> auf die Werte unserer öffentlichen, nach außen bereitgestellten Eigenschaften aus <code>published</code>. Die Werte in <code>published</code> können von außen gesetzt und gelesen werden.</p>
+
+<p>Als Referenz ist das ganze unter <code>2a - Der Wein</code> zu finden.</p>
+
+<h3>Testrunde</h3>
+
+<p>Nachdem wir den Code in unsere <code>Bottle.js</code> geschrieben haben, können wir mit</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="k">new</span> <span class="nx">wine</span><span class="p">.</span><span class="nx">Bottle</span><span class="p">({</span>
+  <span class="nx">wineYear</span><span class="o">:</span> <span class="mi">1999</span><span class="p">,</span>
+  <span class="nx">wineName</span><span class="o">:</span> <span class="s2">&quot;Chardonnay&quot;</span>
+<span class="p">}).</span><span class="nx">renderInto</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">);</span>
+</code></pre></div>
+<p>eine Weinflasche erstellen.</p>
+
+<p>Testweise können wir den Befehl in den script tags unserer index.html angegeben, die vorher leer gelassen wurden. Nun können wir die index.html im Browser öffnen um das Kind weiter zu untersuchen, hier noch einmal der Ablauf unseres Programms:</p>
+
+<p>Wir geben das Jahr und einen Namen für unseren Wein an, unter <code>published</code> wurden diese öffentlichen Eigenschaften unseres Enyo Kinds festgelegt. Bei der Erstellung wird die <code>create</code>-Methode aufgerufen und damit die Inhalte der öffentlichen Eigenschaften in den DOM geschrieben.</p>
+
+<p><img src="/assets/images/enyo_blog_article/2_-_Wein.png" alt="Developer Konsole Screenshot" title="Eine Flasche Wein Screenshot"></p>
+
+<h3>Event Binding (Wein trinken)</h3>
+
+<p>Manchmal trinkt man einen Wein aus seinem Keller. Das wollen wir mit unserem Kind auch abbilden.</p>
+
+<p>Die Idee ist ein &quot;entfernen&quot; Button unter den <code>components</code> des Kinds hinzuzufügen. Wir benutzen den onyx-Button aus dem onyx-Widget-Pack. Auf dem Button soll &quot;getrunken&quot; stehen und er bekommt die CSS-Klasse <code>onyx-negative</code>, die den Button rot färbt.</p>
+
+<p>Mit <code>ontap</code> registrieren wir ein Event, das aufs Antippen reagiert. Enyo kennt viele Events, z.B. auch das beliebte &quot;Wischen&quot;/Swipe.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">{ kind: &quot;onyx.Button&quot;, content: &quot;getrunken&quot;,
+  classes: &quot;onyx-negative&quot;, ontap: &quot;drinkWine&quot; }
+</code></pre></div>
+<p>Wenn man diesen Button drückt, soll die Methode <code>drinkWine</code> ausgeführt werden:</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">drinkWine</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">inSource</span><span class="p">,</span> <span class="nx">inEvent</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">destroy</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Das ontap-Eventbinding referenziert auf die Methode <code>drinkwine</code>. Mit <code>this.destroy</code> zerstört sich das Kind selbst.</p>
+
+<p>Hier das erweiterte Kind im Gesamten:</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">enyo</span><span class="p">.</span><span class="nx">kind</span><span class="p">({</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;wine.Bottle&quot;</span><span class="p">,</span>
+  <span class="nx">kind</span><span class="o">:</span> <span class="nx">enyo</span><span class="p">.</span><span class="nx">Control</span><span class="p">,</span>
+  <span class="nx">classes</span><span class="o">:</span> <span class="s2">&quot;onyx&quot;</span><span class="p">,</span>
+  <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;padding: 10px&quot;</span><span class="p">,</span>
+  <span class="nx">tag</span><span class="o">:</span> <span class="s2">&quot;div&quot;</span><span class="p">,</span>
+  <span class="nx">published</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">wineYear</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="nx">wineName</span><span class="o">:</span> <span class="s2">&quot;&quot;</span>
+  <span class="p">},</span>
+  <span class="nx">components</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span> <span class="nx">tag</span><span class="o">:</span> <span class="s2">&quot;span&quot;</span><span class="p">,</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;wineYear&quot;</span><span class="p">,</span> <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;margin-right: 10px&quot;</span> <span class="p">},</span>
+    <span class="p">{</span> <span class="nx">tag</span><span class="o">:</span> <span class="s2">&quot;span&quot;</span><span class="p">,</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;wineName&quot;</span><span class="p">,</span> <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;margin-right: 10px&quot;</span> <span class="p">},</span>
+    <span class="p">{</span> <span class="nx">kind</span><span class="o">:</span> <span class="s2">&quot;onyx.Button&quot;</span><span class="p">,</span> <span class="nx">content</span><span class="o">:</span> <span class="s2">&quot;getrunken&quot;</span><span class="p">,</span>
+      <span class="nx">classes</span><span class="o">:</span> <span class="s2">&quot;onyx-negative&quot;</span><span class="p">,</span> <span class="nx">ontap</span><span class="o">:</span> <span class="s2">&quot;drinkWine&quot;</span> <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nx">create</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">inherited</span><span class="p">(</span><span class="nx">arguments</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">wineBottleChanged</span><span class="p">();</span>
+  <span class="p">},</span>
+  <span class="nx">wineBottleChanged</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">wineYear</span><span class="p">.</span><span class="nx">setContent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">wineYear</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">wineName</span><span class="p">.</span><span class="nx">setContent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">wineName</span><span class="p">);</span>
+  <span class="p">},</span>
+  <span class="nx">drinkWine</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">inSource</span><span class="p">,</span> <span class="nx">inEvent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">destroy</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<p>Den Beispielcode findet man in <code>2b - Wein trinken</code>.</p>
+
+<h2>Getter und Setter in Enyo</h2>
+
+<p>Enyo liefert automatisch Getter und Setter für seine internen Kinds, beispielsweise:</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="p">.</span><span class="nx">setContent</span><span class="p">();</span>
+<span class="p">.</span><span class="nx">getContent</span><span class="p">();</span>
+<span class="p">.</span><span class="nx">getAttribute</span><span class="p">();</span>
+<span class="p">.</span><span class="nx">setAttribute</span><span class="p">();</span>
+</code></pre></div>
+<p>Doch auch für die von uns festgelegten public-Properties werden automatisch Setter und Getter von Enyo erstellt:</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">wine</span><span class="p">.</span><span class="nx">Bottle</span><span class="p">({</span><span class="nx">wineYear</span><span class="o">:</span> <span class="mi">1999</span><span class="p">,</span> <span class="nx">wineName</span><span class="o">:</span> <span class="s2">&quot;Chardonnay&quot;</span><span class="p">});</span>
+
+<span class="nx">foo</span><span class="p">.</span><span class="nx">getWineYear</span><span class="p">();</span> <span class="c1">// 1999</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">setWineYear</span><span class="p">(</span><span class="mi">2021</span><span class="p">);</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">getWineYear</span><span class="p">();</span> <span class="c1">// 2021</span>
+</code></pre></div>
+<h2 style="padding-top: 1em;">Der Weinkeller</h2>
+
+<p>Unsere Flaschen werden von einem Weinkeller beherbergt. Also erstellen wir eine Datei mit dem Namen <code>Cellar.js</code> und fügen die Datei der <code>package.js</code> hinzu:</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">enyo</span><span class="p">.</span><span class="nx">depends</span><span class="p">(</span>
+  <span class="s2">&quot;./enyo/onyx/onyx.js&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;./enyo/onyx/onyx.css&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;./style/App.css&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;./source/Bottle.js&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;./source/Cellar.js&quot;</span>
+<span class="p">);</span>
+</code></pre></div>
+<p>Nach so viel Basic Input zu Enyo ist der Weinkeller für die Flaschen schnell geschrieben:</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">enyo</span><span class="p">.</span><span class="nx">kind</span><span class="p">({</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;wine.Cellar&quot;</span><span class="p">,</span>
+  <span class="nx">classes</span><span class="o">:</span> <span class="s2">&quot;onyx&quot;</span><span class="p">,</span>
+  <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;padding: 10px;&quot;</span><span class="p">,</span>
+  <span class="nx">components</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span> <span class="nx">kind</span><span class="o">:</span> <span class="s2">&quot;onyx.Input&quot;</span><span class="p">,</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;inputWineYear&quot;</span><span class="p">,</span> <span class="nx">placeholder</span><span class="o">:</span> <span class="s2">&quot;Jahr&quot;</span><span class="p">,</span>
+      <span class="nx">classes</span><span class="o">:</span> <span class="s2">&quot;center&quot;</span> <span class="p">},</span>
+    <span class="p">{</span> <span class="nx">kind</span><span class="o">:</span> <span class="s2">&quot;onyx.Input&quot;</span><span class="p">,</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;inputWineName&quot;</span><span class="p">,</span> <span class="nx">placeholder</span><span class="o">:</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span>
+      <span class="nx">classes</span><span class="o">:</span> <span class="s2">&quot;center&quot;</span> <span class="p">},</span>
+    <span class="p">{</span> <span class="nx">kind</span><span class="o">:</span> <span class="s2">&quot;onyx.Button&quot;</span><span class="p">,</span> <span class="nx">content</span><span class="o">:</span> <span class="s2">&quot;hinzufügen&quot;</span><span class="p">,</span>
+      <span class="nx">classes</span><span class="o">:</span> <span class="s2">&quot;onyx-affirmative center&quot;</span><span class="p">,</span> <span class="nx">ontap</span><span class="o">:</span> <span class="s2">&quot;addWine&quot;</span><span class="p">,</span>
+      <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;margin-top: 10px;&quot;</span> <span class="p">},</span>
+    <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;groupbox&quot;</span><span class="p">,</span> <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;padding-top: 10px;&quot;</span><span class="p">,</span> <span class="nx">kind</span><span class="o">:</span> <span class="s2">&quot;onyx.Groupbox&quot;</span><span class="p">,</span>
+    <span class="nx">showing</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">components</span><span class="o">:</span> <span class="p">[</span>
+      <span class="p">{</span><span class="nx">kind</span><span class="o">:</span> <span class="s2">&quot;onyx.GroupboxHeader&quot;</span><span class="p">,</span> <span class="nx">content</span><span class="o">:</span> <span class="s2">&quot;Weinliste&quot;</span><span class="p">},</span>
+      <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;cellar&quot;</span> <span class="p">}</span>
+    <span class="p">]},</span>
+  <span class="p">],</span>
+  <span class="nx">create</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">inherited</span><span class="p">(</span><span class="nx">arguments</span><span class="p">);</span>
+  <span class="p">},</span>
+  <span class="nx">addWine</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">inSource</span><span class="p">,</span> <span class="nx">inEvent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">year</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineYear</span><span class="p">.</span><span class="nx">getNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
+        <span class="nx">name</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineName</span><span class="p">.</span><span class="nx">getNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">year</span> <span class="o">!==</span> <span class="s2">&quot;&quot;</span> <span class="o">&amp;&amp;</span>  <span class="nx">name</span> <span class="o">!==</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">createComponent</span><span class="p">({</span>
+        <span class="nx">kind</span><span class="o">:</span> <span class="nx">wine</span><span class="p">.</span><span class="nx">Bottle</span><span class="p">,</span>
+        <span class="nx">container</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">cellar</span><span class="p">,</span>
+        <span class="nx">wineYear</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineYear</span><span class="p">.</span><span class="nx">getNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
+        <span class="nx">wineName</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineName</span><span class="p">.</span><span class="nx">getNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
+      <span class="p">});</span>
+      <span class="c1">// neu rendern</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">cellar</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+      <span class="c1">// gruppe sichtbar machen</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">groupbox</span><span class="p">.</span><span class="nx">getShowing</span><span class="p">()</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">groupbox</span><span class="p">.</span><span class="nx">setShowing</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="c1">// inputfelder zurücksetzen</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineName</span><span class="p">.</span><span class="nx">setNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">);</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineYear</span><span class="p">.</span><span class="nx">setNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<p>Wir definieren zwei Input Felder mit Kinds aus dem Onyx Theme. Alternativ wäre auch ganz normal</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="p">{</span> <span class="nx">tag</span><span class="o">:</span> <span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;inputWineName&quot;</span> <span class="p">}</span>
+</code></pre></div>
+<p>usw. möglich.</p>
+
+<p>Wir haben eine Gruppe mit Header, hier wird uns sehr viel von Enyo geschenkt. Die Gruppe ist anfangs nicht sichtbar, erreicht wird dies durch <code>showing: false</code></p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;groupbox&quot;</span><span class="p">,</span> <span class="nx">style</span><span class="o">:</span> <span class="s2">&quot;padding-top: 10px;&quot;</span><span class="p">,</span>
+  <span class="nx">kind</span><span class="o">:</span> <span class="s2">&quot;onyx.Groupbox&quot;</span><span class="p">,</span> <span class="nx">showing</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">components</span><span class="o">:</span> <span class="p">[</span>
+</code></pre></div>
+<p>Der Header in der Gruppe würde beim Start der App stören, wenn noch keine Weine vorhanden sind.</p>
+
+<p>Beim Drücken des &quot;hinzufügen&quot;-Buttons rufen wir unsere Methode <code>addwine</code> auf.</p>
+
+<p>Nachdem hier überprüft wurde, dass beide input-Felder mit Inhalt gefüllt sind, erstellen wir eine neue Weinflasche innerhalb von unserem Kind mit dem Namen <code>cellar</code>. Wir holen die Werte aus den Kinds mit <code>this.$.inputWineYear.getNodeProperty(&quot;value&quot;)</code> und übergeben sie an die published-Properties unseres Weinflaschen-kinds.</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="k">this</span><span class="p">.</span><span class="nx">createComponent</span><span class="p">({</span>
+    <span class="nx">kind</span><span class="o">:</span> <span class="nx">wine</span><span class="p">.</span><span class="nx">Bottle</span><span class="p">,</span>
+    <span class="nx">container</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">cellar</span><span class="p">,</span>
+    <span class="nx">wineYear</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineYear</span><span class="p">.</span><span class="nx">getNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
+    <span class="nx">wineName</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineName</span><span class="p">.</span><span class="nx">getNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
+<span class="p">});</span>
+</code></pre></div>
+<p>Danach rendern wir alles neu und machen die unsichtbare Gruppe sichtbar, da wir nun Einträge vorzuweisen haben. Danach setzen wir die Inputfelder wieder zurück.</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="c1">// neu rendern</span>
+<span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">cellar</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+<span class="c1">// gruppe sichtbar machen</span>
+<span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">groupbox</span><span class="p">.</span><span class="nx">getShowing</span><span class="p">()</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">groupbox</span><span class="p">.</span><span class="nx">setShowing</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// inputfelder zurücksetzen</span>
+<span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineName</span><span class="p">.</span><span class="nx">setNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">);</span>
+<span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">.</span><span class="nx">inputWineYear</span><span class="p">.</span><span class="nx">setNodeProperty</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>Zuletzt ist noch die CSS-Klasse center zu beachten, die in der Datei <code>App.css</code> im Ordner <code>style</code> Einzug gehalten hat.</p>
+
+<p><img src="/assets/images/enyo_blog_article/3_-_App.png" alt="Screen Phonegap" title="Screen Phonegap"></p>
+
+<p><strong>Die App in einer Phonegap &quot;Shell&quot;</strong></p>
+
+<h2>Ausblick</h2>
+
+<p>Letzendlich könnte man dieses kleine Weinkeller Beispiel bis ins unendliche aufblähen. Ich belasse es hierbei, dennoch drängt sich ein Datenspeicher zur Zwischenspeicherung unser Daten auf dem Client und einem Server quasi direkt auf.</p>
+
+<h2>Links</h2>
+
+<p><a href="https://github.com/robertkowalski/enyoJS-Bootcamp" rel="nofollow">Sourcecode auf github</a>.</p>
+
+<p><a href="http://enyojs.com/">Enyo Javascript Framework</a></p>
+
+<p><img src="http://vg09.met.vgwort.de/na/e8931362482b4da680fec6b5110bcb17" width="1" height="1" alt=""></p>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li class="small-bordered">
+        <span class="small-hide">10 Feb 2016&raquo; </span>
+        <a href="/blog/high-performance-erlang-finding-bottlenecks-couchdb-1">High Performance Erlang - Finding Bottlenecks in a CouchDB Cluster #1</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">09 Oct 2015&raquo; </span>
+        <a href="/blog/software-development-in-cuba">Software development in Cuba</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">02 Mar 2015&raquo; </span>
+        <a href="/blog/what-happened-while-contributing-to-open-source-on-a-daily-basis-for-one-year">What happened while contributing to Open Source on a daily basis for one year</a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+    <div class="footer">
+      <div class="contact">
+        <p>
+          Robert Kowalski<br />
+          <br />
+          rok@kowalski.gd
+        </p>
+      </div>
+      <div class="contact">
+        <p>
+          <a href="http://github.com/robertkowalski/">github.com/robertkowalski</a><br />
+          <a href="http://twitter.com/robinson_k/">twitter.com/robinson_k</a><br />
+        </p>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+  <script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-28167405-1', 'auto');
+  ga('set', 'anonymizeIp', true);
+  ga('send', 'pageview');
+</script>
+
+
+
+
+</body>
+</html>
+

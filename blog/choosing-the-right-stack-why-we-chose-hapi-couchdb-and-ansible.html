@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>Choosing the right stack: why we chose Hapi, CouchDB and Ansible</title>
+  <meta name="author" content="Robert Kowalski" />
+  <!-- Homepage CSS -->
+  <meta name="google-site-verification" content="vzd_Qx8aTVcPM4CvUaiUc4dwGtU5enYVAqYotJEdYjY" />
+  <link rel="stylesheet" href="/assets/css/styles-min.css" type="text/css" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <link rel="alternate" type="application/atom+xml" title="kowalski.gd atom feed" href="/atom.xml" />
+  <link rel="alternate" type="application/rss+xml" title="kowalski.gd RSS feed" href="/rss.xml">
+  <link rel="canonical" href="http://kowalski.gd">
+</head>
+<body>
+
+  <div class="site">
+    <div class="title">
+      <a href="/">robert kowalski</a>
+
+      <!--a class="extra" href="/archive.html">Archive</a-->
+      <!--a class="extra" href="">Pages</a-->
+      <!--a class="extra" href="/categories.html">Categories</a-->
+      <!--a class="extra" href="/tags.html">Tags</a-->
+      <a class="extra" href="http://theclibook.com">The CLI Book</a>
+      <a class="extra" href="/imprint.html">Impressum</a>
+    </div>
+
+    
+<div id="post">
+  <h1>Choosing the right stack: why we chose Hapi, CouchDB and Ansible</h1>
+  <p class="meta">
+    02 February 2015 
+    
+  </p>
+  <p>Since 2014 we are organizing the <a href="http://jsunconf.eu">JS Unconf</a>. The edition for 2015 takes place in Hamburg on the 25th and 26th of April and tickets are currently on sale. It’s an Unconference with the main focus on JavaScript and Node.js but also community, health, workflow and workplace (and many more!) are topics. The two mornings of the event everyone attending will vote on each talk submitted. The team then creates a schedule based on the talks which got the most votes.</p>
+
+<p>To make the voting easier and faster we are hosting <a href="http://contriboot.jsunconf.eu/">an application</a> where attendees which are also possible speakers can submit a talk. It is also possible to submit an interest and to answer an interest with a talk. There is also a small „+1“ button for visitors, they are not used in the final voting but help everyone who submitted a talk to see a tendency regarding the interest for the topic. One day before the Unconference we are printing all submissions for the voting. It is still possible to submit something ad-hoc using a pencil during both days but the pre-printed submissions are making our job a bit easier.</p>
+
+<h2>Our requirements</h2>
+
+<p>We wanted to focus on these topics for this year:</p>
+
+<ul>
+<li>high availability and possibility to fail-over</li>
+<li>high level of automation</li>
+<li>easy setup for our friends from other Unconference teams</li>
+<li>easy deployments</li>
+<li>easy testing, next to selenium-based integration tests</li>
+<li>easy theming, as we are using a different design each year</li>
+<li>easy backups</li>
+<li>no vendor-lock-in where it takes hours and hours to switch the platform</li>
+<li>cheap operation, we don’t want to pay &gt; $100/month for hosting &amp; services</li>
+</ul>
+
+<p>The nice thing is that I am not alone this year and we are able to do a lot of pair-programming :)</p>
+
+<h2>Deciding on technologies and app setup</h2>
+
+<h3>Why Hapi?</h3>
+
+<p><a href="http://hapijs.com/">Hapi</a> is a battle tested framework for Node.js made by Walmart. It is backed by a core team which get’s paid to maintain it and the framework is Open Source. Even during Black Friday the US Walmart’s Hapi.js servers are humming along nicely, the graphs they posted on twitter are so boring (which is a good thing) as they are basically all showing flat lines of minimal load.</p>
+
+<p>Reported bugs are getting fixed immediately, the support is really great - also if you have questions. It has a nice and helpful community and great testing support for unit tests. Hapi has an awesome plugin system and the large amount of official plugins (e.g monitoring, logging, OAuth) is very well maintained.</p>
+
+<p>The only thing I am not sure about is the configuration-over-convention approach of Hapi, many developers prefer convention-over-configuration. But after starting with Hapi it turned out that the configuration-based approach made the implementation of our requirement „theming“ quite easy.</p>
+
+<h4>Helps us regarding:</h4>
+
+<ul>
+<li>high availability</li>
+<li>easy testing</li>
+<li>easy theming</li>
+</ul>
+
+<h3>Why CouchDB?</h3>
+
+<p>I was quite late to the party but since I discovered CouchDB I really love the database. It is a perfect fit for the submissions as the usage characteristics for our app are a lot reading requests and just a few writing requests. Given CouchDB’s outstanding abilities regarding replication it’is very easy to replicate our data between servers and datacenters (basically one click in the Admin-Dashboard or one curl request to the API).</p>
+
+<p>As it is all JSON it’s really easy for us as JS developers to write export scripts. We need the submissions printed at the Unconference for the voting and as someone who enjoys writing JS it’s more fun to create a CSV based on JSON instead of a SQL-dump.</p>
+
+<p>A nice Bonus is the REST HTTP API of CouchDB - we get a REST API  for free.</p>
+
+<h4>Helps us regarding:</h4>
+
+<ul>
+<li>high availability and possibility to fail-over</li>
+<li>easy backups</li>
+<li>no vendor-lock-in where it takes hours and hours to switch the platform</li>
+<li>cheap operation, we don’t want to pay &gt; $100/month for hosting &amp; services</li>
+</ul>
+
+<h3>Why Ansible?</h3>
+
+<p>We want to have as much as our infrastructure easy and fast to setup. A server should be in a well defined state that can be automatically reproduced. I think it was Kris Köhntopp who once said something like: „If you have to manually login to your server to fix a problem, you did not automate enough tasks“. I think a common term I heard in the last years is „Infrastructure as Code“ regarding that topic, I already used Puppet and Chef in other setups and started using Ansible recently. I really like Ansible as it is really easy and fast to get started and I don’t need to setup a Puppetmaster or Chef-Server. I know that there is also chef-solo et al, but using a lightweight Ansible client I always had the feeling that I was moving faster. Writing everything in YAML felt a bit weird in the beginning but after a while I really enjoyed it.</p>
+
+<h4>Helps us regarding:</h4>
+
+<ul>
+<li>high level of automation</li>
+<li>easy setup for our friends from other Unconference teams</li>
+<li>easy deployments</li>
+</ul>
+
+<h3>App setup</h3>
+
+<p>After some discussion we decided on a quite common architecture:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">                              +-----------+
+                              |           |      +--------+
+                      +-------&gt;  App      |      |        |
++----------------+    |       |           +------&gt;        |
+|                |    |       +-----------+      |        |
+|  Load Balancer +----+                          |   DB   |
+|                +----+       +-----------+      |        |
++----------------+    |       |           +------&gt;        |
+                      +-------&gt;  App      |      |        |
+                              |           |      +--------+
+                              +-----------+
+</code></pre></div>
+<p>We are currently running with two application servers but as they are stateless we could add more easily. This setup allows us to scale horizontally by adding more servers. As Hapi (and most other Node.js frameworks) is not using the <a href="http://nodejs.org/api/cluster.html">cluster module of Node.js</a> for using multiple CPUs the cheap single-CPU boxes of DigitalOcean are perfect for us ($5/month each). Our LB is also running on one of them.</p>
+
+<p>We are running plain Ubuntu as we (currently <a href="https://github.com/robin-drexler">Robin</a> and me are developing the app) are used to Debian systems - Ubuntu is a nice choice for us as it provides easier access to newer packages. For Node.js we are using the famous Ubuntu PPA from Chris Lea.</p>
+
+<p>We decided against hosting CouchDB on our own and decided for Cloudant, who are hosting clustered CouchDBs as a service. If we ever decide to host CouchDB on our own we can make use of the replication feature that I already mentioned to move our data away.</p>
+
+<p>When we started our application we met 1-2x / week. Initially we had to do a lot of grunt work. We spent some time on the automatic bootstrap of a test-system with a new database for local development and selenium tests. When you kick off a dev system using <a href="https://github.com/jsunconf/contriboot/blob/master/package.json#L11">npm run dev</a> we fill a <a href="https://github.com/jsunconf/contriboot/blob/master/bootstrap.js#L13">development database with fixtures</a> and push all of our views to a local <a href="https://github.com/jsunconf/contriboot/blob/master/bootstrap.js#L62">CouchDB</a>. After that we compile our less to CSS and watch for any changes. If there are any changes, we <a href="https://github.com/jsunconf/contriboot/blob/master/Gulpfile.js">automatically regenerate the less/restart the server</a>. The bootstrap-code, including the selenium runner is the oldest part of the system and needs a refactoring soon.</p>
+
+<p>While it cost some hours to get bootstrapped it definitely paid off in the end! We are able to deploy quite confident that we don’t break anything because we missed some edge cases we did not click through manually each time we make a (temporary) change.</p>
+
+<p>When we fix a bug we add a test case to avoid any regressions in the future. After we had some boring hours when we started, we are now quite fast at implementing all kinds of serious changes, like <a href="https://github.com/jsunconf/contriboot/commit/81c89dcdbaab2aeae15fe69b46ab145b15da37ad">switching the DB client</a> and <a href="https://github.com/jsunconf/contriboot/commit/25eb5abaf5082a92d479b3e6f7b92aeaf392a71d">major framework version upgrades</a> - these tasks were completely finished in around 1hr instead of 3-4hrs or more. We are doing them after our „real“ daily job and they did not result in any downtimes as the tests are catching any bugs early in the process!</p>
+
+<p>When we started, we created our Ansible playbooks for a <a href="https://github.com/jsunconf/contriboot/blob/master/provisioning/dev-setup.yml">Vagrant Box</a>, the initial idea was to test changes there before they go into production.</p>
+
+<p>It turned out that provisioning and managing our servers was so easy and fast that it got common practice for us to just remove one app-server from the loadbalancer configuration, deploy our changes to the isolated server and then test everything on that server in production after our local tests were successful and the CI was green.</p>
+
+<p>When everything was tested successful, we added the test-server to the configuration again and finally deployed the change to all machines.</p>
+
+<p>We have are several different playbooks in our repository, to setup a fresh application server we are basically using <a href="https://github.com/jsunconf/contriboot/blob/master/provisioning/app-server.yml">app-server.yml</a> - we get a fresh app-server with everything configured to our needs in around 3-4 minutes. If we mess it up, we throw it away. As already mentioned, we get a fresh new one where everything is configured for production usage after a few minutes.</p>
+
+<p>Code deployments are done by <a href="https://github.com/jsunconf/contriboot/blob/master/provisioning/deploy-app-server.yml">deploy-app-server.yml</a> - we are fetching the code from GitHub and reload the server. We are currently using this playbook the most  time I think.</p>
+
+<p>The <a href="https://github.com/jsunconf/contriboot/blob/master/provisioning/loadbalancer.yml">loadbalancer</a> is the last major part of our Ansible playbook collection. Depending on the apps in our inventory <a href="https://github.com/jsunconf/contriboot/blob/master/provisioning/templates/haproxy.cfg.j2#L35">we are adding app-servers to the configuration</a>.</p>
+
+<p>By just changing our Ansible inventory it is quite easy for us to remove and add servers to the loadbalancer and/or to deploy just to a single server.</p>
+
+<p>As getting a new box is so fast and easy, we sometimes just throw them away and provision a fresh new one.</p>
+
+<h4>Helps us regarding:</h4>
+
+<ul>
+<li>high availability and possibility to fail-over</li>
+<li>high level of automation</li>
+<li>easy setup for our friends from other Unconference teams</li>
+<li>easy deployments</li>
+<li>easy testing of deployments</li>
+<li>easy backups</li>
+<li>no vendor-lock-in where it takes hours and hours to switch the platform</li>
+<li>cheap operation, we don’t want to pay &gt; $100/month for hosting &amp; services</li>
+</ul>
+
+<h2>Conclusion</h2>
+
+<p>So far we are quite happy using Ansible, Node.js/Hapi and CouchDB. Our application is running at <a href="http://contriboot.jsunconf.eu">contriboot.jsunconf.eu</a>. We will add some new features in the future and refactor some of the older parts.</p>
+
+<p>I would be really happy to chat with you about orchestration and Node.js in production, I am on twitter as <a href="https://twitter.com/robinson_k">@robinson_k</a> - or let’s chat in person at <a href="http://jsunconf.eu">JS Unconf</a>!</p>
+
+<p><img src="http://vg09.met.vgwort.de/na/9c912079e3cc474d80edc8caa584ec4d" width="1" height="1" alt=""></p>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li class="small-bordered">
+        <span class="small-hide">10 Feb 2016&raquo; </span>
+        <a href="/blog/high-performance-erlang-finding-bottlenecks-couchdb-1">High Performance Erlang - Finding Bottlenecks in a CouchDB Cluster #1</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">09 Oct 2015&raquo; </span>
+        <a href="/blog/software-development-in-cuba">Software development in Cuba</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">02 Mar 2015&raquo; </span>
+        <a href="/blog/what-happened-while-contributing-to-open-source-on-a-daily-basis-for-one-year">What happened while contributing to Open Source on a daily basis for one year</a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+    <div class="footer">
+      <div class="contact">
+        <p>
+          Robert Kowalski<br />
+          <br />
+          rok@kowalski.gd
+        </p>
+      </div>
+      <div class="contact">
+        <p>
+          <a href="http://github.com/robertkowalski/">github.com/robertkowalski</a><br />
+          <a href="http://twitter.com/robinson_k/">twitter.com/robinson_k</a><br />
+        </p>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+  <script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-28167405-1', 'auto');
+  ga('set', 'anonymizeIp', true);
+  ga('send', 'pageview');
+</script>
+
+
+
+
+</body>
+</html>
+

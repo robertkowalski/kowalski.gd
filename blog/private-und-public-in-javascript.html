@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>Private und Public in JavaScript</title>
+  <meta name="author" content="Robert Kowalski" />
+  <!-- Homepage CSS -->
+  <meta name="google-site-verification" content="vzd_Qx8aTVcPM4CvUaiUc4dwGtU5enYVAqYotJEdYjY" />
+  <link rel="stylesheet" href="/assets/css/styles-min.css" type="text/css" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <link rel="alternate" type="application/atom+xml" title="kowalski.gd atom feed" href="/atom.xml" />
+  <link rel="alternate" type="application/rss+xml" title="kowalski.gd RSS feed" href="/rss.xml">
+  <link rel="canonical" href="http://kowalski.gd">
+</head>
+<body>
+
+  <div class="site">
+    <div class="title">
+      <a href="/">robert kowalski</a>
+
+      <!--a class="extra" href="/archive.html">Archive</a-->
+      <!--a class="extra" href="">Pages</a-->
+      <!--a class="extra" href="/categories.html">Categories</a-->
+      <!--a class="extra" href="/tags.html">Tags</a-->
+      <a class="extra" href="http://theclibook.com">The CLI Book</a>
+      <a class="extra" href="/imprint.html">Impressum</a>
+    </div>
+
+    
+<div id="post">
+  <h1>Private und Public in JavaScript</h1>
+  <p class="meta">
+    25 September 2011 
+    
+  </p>
+  <p>Heute werfen wir einen Blick auf Public und Private Methoden in JavaScript, denn viele Entwickler denken, dass es keine privaten Methoden/Eigenschaften in JavaScript gibt.</p>
+
+<!-- more -->
+
+<p>Man schreibt nur kein private vor die Methoden / Eigenschaften, wie in vielen anderen Sprachen, die klassenbasiert sind.</p>
+
+<p>Schauen wir uns das ganze mit dem Beispiel eines Top-Spions an, das man leicht in der Chrome Konsole oder im Firebug ausprobieren kann:</p>
+
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">Spy</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+
+  <span class="c1">// @private</span>
+  <span class="kd">var</span> <span class="nx">name</span> <span class="o">=</span> <span class="s1">&#39;Hans&#39;</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">setName</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">n</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">name</span> <span class="o">=</span> <span class="nx">n</span><span class="p">;</span>
+    <span class="k">return</span> <span class="s1">&#39;Neuer Name: &#39;</span><span class="o">+</span> <span class="nx">name</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="kd">var</span> <span class="nx">getName</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">name</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="c1">//Interface</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="c1">// @public</span>
+    <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Peter&#39;</span><span class="p">,</span>
+    <span class="nx">setPrivateName</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">setName</span><span class="p">(</span><span class="nx">name</span><span class="p">);</span>
+    <span class="p">},</span>
+    <span class="c1">// hat Zugriff auf die privaten Variablen / Methoden</span>
+    <span class="nx">getPrivateName</span><span class="o">:</span>  <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="s1">&#39;Private Eigenschaft: &#39;</span><span class="o">+</span> <span class="nx">name</span> <span class="o">+</span> <span class="s2">&quot; - Privater Getter: &quot;</span> <span class="o">+</span> <span class="nx">getName</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>Peter ist nämlich Geheimagent und hat einen Namen, sowie einen Decknamen.
+Doch er fliegt während einer Operation auf und benötigt einen neuen Namen.</p>
+
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Spy</span><span class="p">();</span>
+<span class="c1">// =&gt; undefined</span>
+
+<span class="nx">s</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+<span class="c1">//=&gt;  &quot;Peter&quot;</span>
+
+<span class="c1">// Versuch auf private Methode zuzugreifen</span>
+<span class="nx">s</span><span class="p">.</span><span class="nx">getName</span><span class="p">();</span>
+<span class="c1">//=&gt; TypeError: Object #&lt;Object&gt; has no method &#39;getName&#39;</span>
+<span class="nx">s</span><span class="p">.</span><span class="nx">setName</span><span class="p">(</span><span class="s1">&#39;Georg der Spion&#39;</span><span class="p">);</span>
+<span class="c1">// =&gt; TypeError: Object #&lt;Object&gt; has no method &#39;setName&#39;</span>
+
+<span class="c1">// Über das Interface</span>
+<span class="nx">s</span><span class="p">.</span><span class="nx">getPrivateName</span><span class="p">();</span>
+<span class="c1">// =&gt; &quot;Private Eigenschaft: Hans - Privater Getter: Hans&quot;</span>
+<span class="nx">s</span><span class="p">.</span><span class="nx">setPrivateName</span><span class="p">(</span><span class="s1">&#39;Tom&#39;</span><span class="p">);</span>
+<span class="c1">//  =&gt; &quot;Neuer Name: Tom&quot;</span>
+<span class="nx">s</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+<span class="c1">// =&gt; &quot;Peter&quot;</span>
+<span class="nx">s</span><span class="p">.</span><span class="nx">getPrivateName</span><span class="p">();</span>
+<span class="c1">// =&gt; &quot;Private Eigenschaft: Tom - Privater Getter: Tom&quot;</span></code></pre></figure>
+
+<p>Letzendlich hoffe ich, ich konnte einen kleinen Einblick in JavaScript vermitteln.</p>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li class="small-bordered">
+        <span class="small-hide">10 Feb 2016&raquo; </span>
+        <a href="/blog/high-performance-erlang-finding-bottlenecks-couchdb-1">High Performance Erlang - Finding Bottlenecks in a CouchDB Cluster #1</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">09 Oct 2015&raquo; </span>
+        <a href="/blog/software-development-in-cuba">Software development in Cuba</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">02 Mar 2015&raquo; </span>
+        <a href="/blog/what-happened-while-contributing-to-open-source-on-a-daily-basis-for-one-year">What happened while contributing to Open Source on a daily basis for one year</a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+    <div class="footer">
+      <div class="contact">
+        <p>
+          Robert Kowalski<br />
+          <br />
+          rok@kowalski.gd
+        </p>
+      </div>
+      <div class="contact">
+        <p>
+          <a href="http://github.com/robertkowalski/">github.com/robertkowalski</a><br />
+          <a href="http://twitter.com/robinson_k/">twitter.com/robinson_k</a><br />
+        </p>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+  <script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-28167405-1', 'auto');
+  ga('set', 'anonymizeIp', true);
+  ga('send', 'pageview');
+</script>
+
+
+
+
+</body>
+</html>
+

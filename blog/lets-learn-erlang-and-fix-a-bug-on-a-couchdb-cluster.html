@@ -1,0 +1,450 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>Let’s learn Erlang and fix a bug on a CouchDB Cluster #1</title>
+  <meta name="author" content="Robert Kowalski" />
+  <!-- Homepage CSS -->
+  <meta name="google-site-verification" content="vzd_Qx8aTVcPM4CvUaiUc4dwGtU5enYVAqYotJEdYjY" />
+  <link rel="stylesheet" href="/assets/css/styles-min.css" type="text/css" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <link rel="alternate" type="application/atom+xml" title="kowalski.gd atom feed" href="/atom.xml" />
+  <link rel="alternate" type="application/rss+xml" title="kowalski.gd RSS feed" href="/rss.xml">
+  <link rel="canonical" href="http://kowalski.gd">
+</head>
+<body>
+
+  <div class="site">
+    <div class="title">
+      <a href="/">robert kowalski</a>
+
+      <!--a class="extra" href="/archive.html">Archive</a-->
+      <!--a class="extra" href="">Pages</a-->
+      <!--a class="extra" href="/categories.html">Categories</a-->
+      <!--a class="extra" href="/tags.html">Tags</a-->
+      <a class="extra" href="http://theclibook.com">The CLI Book</a>
+      <a class="extra" href="/imprint.html">Impressum</a>
+    </div>
+
+    
+<div id="post">
+  <h1>Let’s learn Erlang and fix a bug on a CouchDB Cluster #1</h1>
+  <p class="meta">
+    03 December 2014 
+    
+  </p>
+  <p>Let’s learn Erlang is a series where I will try to teach some Erlang by explaining patches that we will write together. I am trying to explain everything but feel free to check out <a href="http://learnyousomeerlang.com/content">http://learnyousomeerlang.com/content</a> which is an excellent book to start learning Erlang.</p>
+
+<p>CouchDB 2.0 is a database that got clustering based on Amazon’s Dynamo Paper which allows horizontal scaling of CouchDB by adding nodes to the cluster. At the time of writing, it is not officially released yet, but we can already use it and fix bugs on it to learn Erlang.</p>
+
+<p>Today we will write a patch for CouchDB in Erlang.</p>
+
+<p>I often added GitHub links but I suggest you’ll open a text editor and follow the steps.</p>
+
+<h2>Getting started</h2>
+
+<p>Clone CouchDB - to fix this bug with me you will need a CouchDB version where the bug is not fixed yet:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">git clone https://github.com/robertkowalski/couchdb.git
+cd couchdb &amp;&amp; git fetch origin
+git checkout article-auth-session-COUCHDB-1356
+</code></pre></div>
+<p>To compile CouchDB on OSX (if you don’t use OSX, please read <a href="https://github.com/robertkowalski/couchdb/blob/article-auth-session-COUCHDB-1356/INSTALL.Unix">https://github.com/robertkowalski/couchdb/blob/article-auth-session-COUCHDB-1356/INSTALL.Unix</a>) you will need to have the OSX commandline-tools installed. You can install them via terminal:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">xcode-select --install
+</code></pre></div>
+<p>You will also need to install these dependencies (brew on OSX is used here):</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">brew install autoconf
+brew install autoconf-archive
+brew install automake
+brew install libtool
+brew install erlang
+brew install icu4c
+brew install spidermonkey
+brew install curl
+brew install pkg-config
+brew install rebar
+brew install haproxy
+</code></pre></div>
+<p>After we installed everything we will need to check out the CouchDB source and run:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">./configure
+make
+</code></pre></div>
+<p>CouchDB is split into smaller sub-repositories. The <code>./configure</code> kicks off rebar which will pull each sub-repo down into the folder <code>src</code>.</p>
+
+<p>Calling <code>./dev/run</code> from the CouchDB directory now allows us to spin up a three node development cluster. In another terminal, run: <code>haproxy -f rel/haproxy.cfg</code>. We now have a haproxy running in front of our three nodes on port 5984.</p>
+
+<h2>Hunting the bug</h2>
+
+<h3>Verifying it exists</h3>
+
+<p>Todays bug is COUCHDB-1356 (<a href="https://issues.apache.org/jira/browse/COUCHDB-1356">https://issues.apache.org/jira/browse/COUCHDB-1356</a>). It says:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">When logging in with admin credentials (and no corresponding _users doc, if
+that is important), the response of the POST to _session has the name
+property set to null:
+
+{&quot;ok&quot;:true,&quot;name&quot;:null,&quot;roles&quot;:[&quot;_admin&quot;]}
+
+It should be the name of the admin instead, like it does when logging in with
+a standard user: {&quot;ok&quot;:true,&quot;name&quot;:&quot;standarduser&quot;,&quot;roles&quot;:[]}
+
+Requesting the _session object after logging in with an admin, the name is
+proper set:
+
+{&quot;ok&quot;:true,&quot;userCtx&quot;:
+{&quot;name&quot;:&quot;adminuser&quot;,&quot;roles&quot;:[&quot;_admin&quot;]},&quot;info&quot;:{&quot;authentication_db&quot;:&quot;_users&quot;,
+&quot;authentication_handlers&quot;:[&quot;oauth&quot;,&quot;cookie&quot;,&quot;default&quot;],
+&quot;authenticated&quot;:&quot;cookie&quot;}}
+</code></pre></div>
+<p>Let’s verify that bug after pulling down our repository and installing the dependencies. According to <a href="http://docs.couchdb.org/en/latest/api/server/authn.html#post--_session">http://docs.couchdb.org/en/latest/api/server/authn.html#post--_session</a> we can post JSON or x-www-form-urlencoded data, so let’s try to reproduce the bug:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">#spin up a dev-cluster with username foo and password bar
+./dev/run --admin=foo:bar
+#post to a node
+curl -X POST http://localhost:15984/_session -d &#39;name=foo&amp;password=bar&#39;
+</code></pre></div>
+<p>returns:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">{&quot;ok&quot;:true,&quot;name&quot;:null,&quot;roles&quot;:[&quot;_admin&quot;]}
+</code></pre></div>
+<p>Ok, that was easy. Seems like we were able to reproduce the bug.</p>
+
+<h3>Searching the broken code</h3>
+
+<p>Let’s see how far we can go by searching for <code>_session</code> which is the endpoint from the bug-report where the error is happening:</p>
+
+<p><a href="/assets/images/erlang-1/search-route.png">
+    <img width="500" src="/assets/images/erlang-1/search-route.png" alt="Search results for _session" />
+</a></p>
+
+<p>One of the first results is this snippet of code in <code>chttpd.erl</code>:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">url_handler</span><span class="p">(</span><span class="s">&quot;_sleep&quot;</span><span class="p">)</span> <span class="o">-&gt;</span>        <span class="k">fun</span> <span class="nn">chttpd_misc</span><span class="p">:</span><span class="n">handle_sleep_req</span><span class="o">/</span><span class="mi">1</span><span class="p">;</span>
+<span class="nf">url_handler</span><span class="p">(</span><span class="s">&quot;_session&quot;</span><span class="p">)</span> <span class="o">-&gt;</span>      <span class="k">fun</span> <span class="nn">chttpd_auth</span><span class="p">:</span><span class="n">handle_session_req</span><span class="o">/</span><span class="mi">1</span><span class="p">;</span>
+<span class="nf">url_handler</span><span class="p">(</span><span class="s">&quot;_oauth&quot;</span><span class="p">)</span> <span class="o">-&gt;</span>        <span class="k">fun</span> <span class="nn">couch_httpd_oauth</span><span class="p">:</span><span class="n">handle_oauth_req</span><span class="o">/</span><span class="mi">1</span><span class="p">;</span>
+</code></pre></div>
+<p><a href="https://github.com/apache/couchdb-chttpd/blob/b44515f1c137994f5278f42106ecf720e2c35011/src/chttpd.erl#L360-375">https://github.com/apache/couchdb-chttpd/blob/b44515f1c137994f5278f42106ecf720e2c35011/src/chttpd.erl#L360-375</a></p>
+
+<p>What does that snippet of code mean? One of the core features of Erlang is called pattern-matching. These functions are called function clauses, which take different arguments. Together they form a function declaration. The code for the <code>url_handler(&quot;_session&quot;)</code> shows the path for the code in case of <code>url_handler</code> being called with the argument <code>&quot;_session&quot;</code>. The other functions are invoked by other arguments, like <code>&quot;oauth&quot;</code>. If we call the function <code>url_handler</code> with the argument <code>session</code> - which is a String - a new function is returned.  The last clause shows a catch-all using <code>_</code> as argument:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">url_handler</span><span class="p">(_)</span> <span class="o">-&gt;</span> <span class="k">fun</span> <span class="nn">chttpd_db</span><span class="p">:</span><span class="n">handle_request</span><span class="o">/</span><span class="mi">1</span><span class="p">.</span>
+</code></pre></div>
+<p>Anything called with one parameter which does not match the other patterns will end in <code>chttpd_db:handle_request/1</code>.</p>
+
+<p>Erlang functions return implicit and the value from the last statement is always returned (in this case another function: the function <code>chttpd_auth:handle_session_req</code> which takes 1 argument).</p>
+
+<p>It seems that http-requests going to the cluster-nodes are handled by a component called <code>chttpd</code>. Ok, so it seems CouchDB has elements that are quite similar to a traditional web server as it accepts requests over HTTP.</p>
+
+<p>Let’s have a look at <code>chttpd</code> in general, when we open <code>src/chttpd</code>, we’ll see this directory structure:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">├── ebin
+├── priv
+└── src
+</code></pre></div>
+<ul>
+<li><code>ebin</code> contains our compiled source which is compiled to bytecode which runs on the Erlang VM</li>
+<li><code>priv</code> contains other dependencies that chttpd has ????</li>
+<li><code>src</code> contains the source code that we are interested in</li>
+</ul>
+
+<p>When we open the src folder we see that there is a file called <code>chttpd_auth.erl</code>. That one looks promising!</p>
+
+<p>When we open the file we’ll see that the file is an Erlang module:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="p">-</span><span class="ni">module</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+</code></pre></div>
+<p><a href="https://github.com/apache/couchdb-chttpd/blob/b44515f1c137994f5278f42106ecf720e2c35011/src/chttpd_auth.erl#L13">https://github.com/apache/couchdb-chttpd/blob/b44515f1c137994f5278f42106ecf720e2c35011/src/chttpd_auth.erl#L13</a></p>
+
+<p>A module can export several functions, in that case <code>default_authentication_handler</code> <code>cookie_authentication_handler</code> and <code>handle_session_req</code> are exported.</p>
+
+<p><strong>Some background info on exports</strong>:
+an exported function is usable outside of a module. The <code>/1</code> in the export means that the function with this name is taking one argument. Erlang functions can have the same name, but take different arguments — and you can export them depending on how many arguments they take - Example:</p>
+
+<p>if we wanted to additionally export a fictional function that has the same name and takes two arguments we would probably write:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">handle_session_req</span><span class="p">(_</span><span class="nv">Req</span><span class="p">,</span> <span class="p">_</span><span class="nv">Foo</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="n">ok</span><span class="p">.</span>
+</code></pre></div>
+<p>and would additionally export:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="p">-</span><span class="ni">export</span><span class="p">([</span><span class="n">handle_session_req</span><span class="o">/</span><span class="mi">2</span><span class="p">]).</span>
+</code></pre></div>
+<p>But back to our code: if we look at <code>handle_session_req</code> we’ll see that it is delegating to another module and function: it seems there is a module called <code>couch_httpd_auth</code> which has a function <code>handle_session_req</code> with an arity of two (which is indicated by a <code>handle_session_req/2</code>).</p>
+
+<p><a href="https://github.com/apache/couchdb-chttpd/blob/b44515f1c137994f5278f42106ecf720e2c35011/src/chttpd_auth.erl#L25-26">https://github.com/apache/couchdb-chttpd/blob/b44515f1c137994f5278f42106ecf720e2c35011/src/chttpd_auth.erl#L25-26</a></p>
+
+<p>The function in question seems to be in the folder <code>couch</code> - as you might have noticed the CouchDB modules have their component as a prefix of their filename (<code>chttpd_auth.erl</code> will lead you to the folder <code>chttpd</code> and <code>couch_httpd_auth.erl</code> leads you to the folder <code>couch</code>). So let’s open that file in <code>src/couch/src</code>.</p>
+
+<p>There are multiple definitions of <code>handle_session_req</code> but as we do a POST-request to the endpoint there is just one which fits for us:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">handle_session_req</span><span class="p">(</span><span class="nl">#httpd</span><span class="p">{</span><span class="n">method</span><span class="o">=</span><span class="n">&#39;POST&#39;</span><span class="p">,</span> <span class="n">mochi_req</span><span class="o">=</span><span class="nv">MochiReq</span><span class="p">}</span><span class="o">=</span><span class="nv">Req</span><span class="p">,</span> <span class="nv">AuthModule</span><span class="p">)</span>
+</code></pre></div>
+<p><a href="https://github.com/apache/couchdb-couch/blob/master/src/couch_httpd_auth.erl#L270">https://github.com/apache/couchdb-couch/blob/master/src/couch<em>httpd</em>auth.erl#L270</a></p>
+
+<p>If you remember the CouchDB docs (<a href="http://docs.couchdb.org/en/latest/api/server/authn.html#post--_session">http://docs.couchdb.org/en/latest/api/server/authn.html#post--_session</a>) we can POST with different Content-Types. In the beginning of the handler we see the handling for it, it seems we are on a good path.</p>
+
+<p><a href="https://github.com/apache/couchdb-couch/blob/master/src/couch_httpd_auth.erl#L272-283">https://github.com/apache/couchdb-couch/blob/master/src/couch<em>httpd</em>auth.erl#L272-283</a></p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">send_json</span><span class="p">(</span><span class="nv">Req</span><span class="nl">#httpd</span><span class="p">{</span><span class="n">req_body</span><span class="o">=</span><span class="nv">ReqBody</span><span class="p">},</span> <span class="nv">Code</span><span class="p">,</span> <span class="nv">Headers</span><span class="p">,</span>
+    <span class="p">{[</span>
+        <span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="n">true</span><span class="p">},</span>
+        <span class="p">{</span><span class="n">name</span><span class="p">,</span> <span class="nn">couch_util</span><span class="p">:</span><span class="nf">get_value</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;name&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="nv">UserProps2</span><span class="p">,</span> <span class="n">null</span><span class="p">)},</span>
+        <span class="p">{</span><span class="n">roles</span><span class="p">,</span> <span class="nn">couch_util</span><span class="p">:</span><span class="nf">get_value</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;roles&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="nv">UserProps2</span><span class="p">,</span> <span class="p">[])}</span>
+    <span class="p">]});</span>
+</code></pre></div>
+<p>It seems that this code is sends the buggy response to the user - time for me to introduce <code>io:format</code>: with <code>io:format</code> we can log things to the console, example:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">io:format(&quot;demoprint: ~s&quot;, [&quot;foo&quot;]).
+</code></pre></div>
+<p>results in <code>demoprint: foo</code> on the stdout.</p>
+
+<p>The bug report says the name value is not set, strange.</p>
+
+<p>A short look at <code>couch_util:get_value</code> says us that it returns the value of a key/value structure and if it does not find it, it returns a default value (<a href="https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/src/couch_util.erl#L154">https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/src/couch_util.erl#L154</a>)</p>
+
+<p>We will add <code>io:format</code> with a comma at , as other statements are following that we want to execute (<code>send_json</code>):</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nn">io</span><span class="p">:</span><span class="nf">format</span><span class="p">(</span><span class="s">&quot;</span><span class="si">~s</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nv">UserProps2</span><span class="p">]),</span>
+<span class="nf">send_json</span><span class="p">(</span><span class="nv">Req</span><span class="nl">#httpd</span><span class="p">{</span><span class="n">req_body</span><span class="o">=</span><span class="nv">ReqBody</span><span class="p">},</span> <span class="nv">Code</span><span class="p">,</span> <span class="nv">Headers</span><span class="p">,</span>
+    <span class="p">{[</span>
+        <span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="n">true</span><span class="p">},</span>
+        <span class="p">{</span><span class="n">name</span><span class="p">,</span> <span class="nn">couch_util</span><span class="p">:</span><span class="nf">get_value</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;name&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="nv">UserProps2</span><span class="p">,</span> <span class="n">null</span><span class="p">)},</span>
+        <span class="p">{</span><span class="n">roles</span><span class="p">,</span> <span class="nn">couch_util</span><span class="p">:</span><span class="nf">get_value</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;roles&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="nv">UserProps2</span><span class="p">,</span> <span class="p">[])}</span>
+    <span class="p">]});</span>
+</code></pre></div>
+<p>Ok, we&#39;ll stop the cluster (crtl+c) and run make again from our project root directory.</p>
+
+<p>After the compile we redo the steps to boot the cluster from the first part of the article:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">#spin up a dev-cluster with username foo and password bar
+./dev/run --admin=foo:bar
+#post to a node
+curl -X POST http://localhost:15984/_session -d &#39;name=foo&amp;password=bar&#39;
+</code></pre></div>
+<p>CouchDB returns:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">{&quot;error&quot;:&quot;badarg&quot;,&quot;reason&quot;:null,&quot;ref&quot;:2510570082}
+</code></pre></div>
+<p>Let&#39;s have a look at the Erlang docs at <a href="http://erlang.org/doc/man/io.html#format-2">http://erlang.org/doc/man/io.html#format-2</a> - let&#39;s try if <code>~p</code> is the right fit for our needs as it is used print Erlang terms.</p>
+
+<p>We change our code to:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nn">io</span><span class="p">:</span><span class="nf">format</span><span class="p">(</span><span class="s">&quot;</span><span class="si">~p</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nv">UserProps2</span><span class="p">]),</span>
+<span class="nf">send_json</span><span class="p">(</span><span class="nv">Req</span><span class="nl">#httpd</span><span class="p">{</span><span class="n">req_body</span><span class="o">=</span><span class="nv">ReqBody</span><span class="p">},</span> <span class="nv">Code</span><span class="p">,</span> <span class="nv">Headers</span><span class="p">,</span>
+    <span class="p">{[</span>
+        <span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="n">true</span><span class="p">},</span>
+        <span class="p">{</span><span class="n">name</span><span class="p">,</span> <span class="nn">couch_util</span><span class="p">:</span><span class="nf">get_value</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;name&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="nv">UserProps2</span><span class="p">,</span> <span class="n">null</span><span class="p">)},</span>
+        <span class="p">{</span><span class="n">roles</span><span class="p">,</span> <span class="nn">couch_util</span><span class="p">:</span><span class="nf">get_value</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;roles&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="nv">UserProps2</span><span class="p">,</span> <span class="p">[])}</span>
+    <span class="p">]});</span>
+</code></pre></div>
+<p>and after the stop of the cluster, compile and start of the cluster we get a nice message from CouchDB:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">{&quot;ok&quot;:true,&quot;name&quot;:null,&quot;roles&quot;:[&quot;_admin&quot;]}
+</code></pre></div>
+<p>But where is our debug logging output?</p>
+
+<p>The dev-cluster nodes are logging each on their own. In a production setup they would be on different machines. In our development setup they log to <code>./dev/logs/</code>. <code>15984</code> is node1 so we enter in the terminal:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">cat ./dev/logs/node1.log
+</code></pre></div>
+<p>and we will see something like this in the log:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">2014-11-27 00:43:41.374 [debug] node1@127.0.0.1 &lt;0.259.0&gt; adding shards/80000
+  000-9fffffff/_users.1416085356 -&gt; &#39;node2@127.0.0.1&#39; to mem3_sync queue
+2014-11-27 00:43:41.406 [debug] node1@127.0.0.1 &lt;0.478.0&gt; Attempt Login: foo
+2014-11-27 00:43:41.406 [warning] node1@127.0.0.1 &lt;0.478.0&gt; no record of user
+  foo
+2014-11-27 00:43:41.406 [debug] node1@127.0.0.1 &lt;0.478.0&gt; cache miss for foo
+[{&lt;&lt;&quot;roles&quot;&gt;&gt;,[&lt;&lt;&quot;_admin&quot;&gt;&gt;]},
+ {&lt;&lt;&quot;salt&quot;&gt;&gt;,&lt;&lt;&quot;194439690d43ce9c2720acb4db907723&quot;&gt;&gt;},
+ {&lt;&lt;&quot;iterations&quot;&gt;&gt;,10},
+ {&lt;&lt;&quot;password_scheme&quot;&gt;&gt;,&lt;&lt;&quot;pbkdf2&quot;&gt;&gt;},
+ {&lt;&lt;&quot;derived_key&quot;&gt;&gt;,&lt;&lt;&quot;e6de659df04ca1db5050bb6747fb039a30836a01&quot;&gt;&gt;}]
+   2014-11-27 00:43:41.407 [notice] node1@127.0.0.1 &lt;0.478.0&gt; 776ee413
+   127.0.0.1 localhost:15984 POST /_session 200 ok 2
+</code></pre></div>
+<p>I think we are now able to confirm that our structure, which is a list does not contain the key we are searching for.</p>
+
+<h3>Write a failing test</h3>
+
+<p>CouchDB uses EUnit which is included in Erlang. A good start for a test is to copy another test to have the boilerplate already added. <code>src/couch/test/couchdb_csp_tests.erl</code> look like a nice template as they already make HTTP-requests.</p>
+
+<p>We run:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">cp src/couch/test/couchdb_csp_tests.erl src/couch/test/couchdb_auth_tests.erl
+</code></pre></div>
+<p>If we take a look at our copied testfiles each test in the file has an assertion.</p>
+
+<p><a href="https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/couchdb_csp_tests.erl#L68-74">https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/couchdb<em>csp</em>tests.erl#L68-74</a></p>
+
+<p>EUnit uses so called Macros which are called with a <code>?</code> in front of the name, like <code>?_assertEqual</code>. Everyone can define macros, and it is quite easy:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="p">-</span><span class="ni">define</span><span class="p">(</span><span class="no">MACRONAME</span><span class="p">,</span> <span class="s">&quot;Value&quot;</span><span class="p">).</span>
+</code></pre></div>
+<p>Would return <code>&quot;Value&quot;</code> on <code>?MACRONAME().</code></p>
+
+<p>We can also delete the TIMEOUT-Macro at the top of our file, we will not need it.</p>
+
+<p><a href="https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/couchdb_csp_tests.erl#L17">https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/couchdb<em>csp</em>tests.erl#L17</a></p>
+
+<p>The <code>setup</code> and <code>teardown</code> functions are running before and after the tests. The copied version of our test says:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">setup</span><span class="p">()</span> <span class="o">-&gt;</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="nn">config</span><span class="p">:</span><span class="nf">set</span><span class="p">(</span><span class="s">&quot;csp&quot;</span><span class="p">,</span> <span class="s">&quot;enable&quot;</span><span class="p">,</span> <span class="s">&quot;true&quot;</span><span class="p">,</span> <span class="n">false</span><span class="p">),</span>
+    <span class="nv">Addr</span> <span class="o">=</span> <span class="nn">config</span><span class="p">:</span><span class="nb">get</span><span class="p">(</span><span class="s">&quot;httpd&quot;</span><span class="p">,</span> <span class="s">&quot;bind_address&quot;</span><span class="p">,</span> <span class="s">&quot;127.0.0.1&quot;</span><span class="p">),</span>
+    <span class="nv">Port</span> <span class="o">=</span> <span class="nb">integer_to_list</span><span class="p">(</span><span class="nn">mochiweb_socket_server</span><span class="p">:</span><span class="nb">get</span><span class="p">(</span><span class="n">couch_httpd</span><span class="p">,</span> <span class="n">port</span><span class="p">)),</span>
+    <span class="nn">lists</span><span class="p">:</span><span class="nf">concat</span><span class="p">([</span><span class="s">&quot;http://&quot;</span><span class="p">,</span> <span class="nv">Addr</span><span class="p">,</span> <span class="s">&quot;:&quot;</span><span class="p">,</span> <span class="nv">Port</span><span class="p">,</span> <span class="s">&quot;/_utils/&quot;</span><span class="p">]).</span>
+</code></pre></div>
+<p><a href="https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/couchdb_csp_tests.erl#L20-24">https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/couchdb<em>csp</em>tests.erl#L20-24</a></p>
+
+<p>which we can modify to:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">setup</span><span class="p">()</span> <span class="o">-&gt;</span>
+    <span class="nv">Addr</span> <span class="o">=</span> <span class="nn">config</span><span class="p">:</span><span class="nb">get</span><span class="p">(</span><span class="s">&quot;httpd&quot;</span><span class="p">,</span> <span class="s">&quot;bind_address&quot;</span><span class="p">,</span> <span class="s">&quot;127.0.0.1&quot;</span><span class="p">),</span>
+    <span class="nv">Port</span> <span class="o">=</span> <span class="nb">integer_to_list</span><span class="p">(</span><span class="nn">mochiweb_socket_server</span><span class="p">:</span><span class="nb">get</span><span class="p">(</span><span class="n">couch_httpd</span><span class="p">,</span> <span class="n">port</span><span class="p">)),</span>
+    <span class="nn">lists</span><span class="p">:</span><span class="nf">concat</span><span class="p">([</span><span class="s">&quot;http://&quot;</span><span class="p">,</span> <span class="nv">Addr</span><span class="p">,</span> <span class="s">&quot;:&quot;</span><span class="p">,</span> <span class="nv">Port</span><span class="p">,</span> <span class="s">&quot;/_session&quot;</span><span class="p">]).</span>
+</code></pre></div>
+<p>As Erlang implicitly returns, we are returning the address to our session endpoint. This will get passed to our test (the section beginning with the <code>should</code>).</p>
+
+<p>In the middle of our file we will find a loop which iterates over our tests.</p>
+
+<p><a href="https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/couchdb_csp_tests.erl#L30-L47">https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/couchdb<em>csp</em>tests.erl#L30-L47</a></p>
+
+<p>We can rename the Headline from <code>&quot;Content Security Policy tests&quot;</code> to <code>&quot;Auth tests&quot;</code> and delete the last three tests. <code>should_not_return_any_csp_headers_when_disabled</code> can get renamed to <code>should_not_return_username_on_post_to_session</code>. We also have to rename the test declaration and delete the other three declarations - if we would not delete them, we would get a compiler warning, that the functions are not used.</p>
+
+<p>Our renamed test that was not deleted should look like this:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">should_not_return_username_on_post_to_session</span><span class="p">(</span><span class="nv">Url</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="o">?</span><span class="p">_</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">undefined</span><span class="p">,</span>
+        <span class="k">begin</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="nn">config</span><span class="p">:</span><span class="nf">set</span><span class="p">(</span><span class="s">&quot;csp&quot;</span><span class="p">,</span> <span class="s">&quot;enable&quot;</span><span class="p">,</span> <span class="s">&quot;false&quot;</span><span class="p">,</span> <span class="n">false</span><span class="p">),</span>
+            <span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="p">_,</span> <span class="nv">Headers</span><span class="p">,</span> <span class="p">_}</span> <span class="o">=</span> <span class="nn">test_request</span><span class="p">:</span><span class="nb">get</span><span class="p">(</span><span class="nv">Url</span><span class="p">),</span>
+            <span class="nn">proplists</span><span class="p">:</span><span class="nf">get_value</span><span class="p">(</span><span class="s">&quot;Content-Security-Policy&quot;</span><span class="p">,</span> <span class="nv">Headers</span><span class="p">)</span>
+        <span class="k">end</span><span class="p">).</span>
+</code></pre></div>
+<p>it tests for the atom <code>undefined</code>. The test says it should be returned at the end of the block marked by <code>begin</code> and <code>end</code>. Before that it  changes the config value for the csp section and makes a GET-request. The author is just interested in the headers here, so other values are not assigned to a variable (<code>_</code>). By the way: in Erlang every variable has to start with an uppercase letter.</p>
+
+<p>Changing this snippet to our needs is quite easy: admins are also defined in the config (see also: <a href="http://docs.couchdb.org/en/1.6.1/config/auth.html">http://docs.couchdb.org/en/1.6.1/config/auth.html</a>). So our call to setup the user <code>rocko</code> with password <code>artischocko</code> would be:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="n">ok</span> <span class="o">=</span> <span class="nn">config</span><span class="p">:</span><span class="nf">set</span><span class="p">(</span><span class="s">&quot;admins&quot;</span><span class="p">,</span> <span class="s">&quot;rocko&quot;</span><span class="p">,</span> <span class="s">&quot;artischocko&quot;</span><span class="p">,</span> <span class="n">false</span><span class="p">),</span>
+</code></pre></div>
+<p>Looking at the next line</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="p">_,</span> <span class="nv">Headers</span><span class="p">,</span> <span class="p">_}</span> <span class="o">=</span> <span class="nn">test_request</span><span class="p">:</span><span class="nb">get</span><span class="p">(</span><span class="nv">Url</span><span class="p">),</span>
+</code></pre></div>
+<p>it turns out that we need a POST-request and the body, not the headers.</p>
+
+<p>The <code>get</code>-functions in <code>test_request.erl</code> just wrap a request function for convenience: <a href="https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/test_request.erl#L23-26">https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/test/test_request.erl#L23-26</a></p>
+
+<p>As functions for a POST is missing, we have to add it:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">post</span><span class="p">(</span><span class="nv">Url</span><span class="p">,</span> <span class="nv">Body</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="n">request</span><span class="p">(</span><span class="n">post</span><span class="p">,</span> <span class="nv">Url</span><span class="p">,</span> <span class="p">[],</span> <span class="nv">Body</span><span class="p">).</span>
+<span class="nf">post</span><span class="p">(</span><span class="nv">Url</span><span class="p">,</span> <span class="nv">Headers</span><span class="p">,</span> <span class="nv">Body</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="n">request</span><span class="p">(</span><span class="n">post</span><span class="p">,</span> <span class="nv">Url</span><span class="p">,</span> <span class="nv">Headers</span><span class="p">,</span> <span class="nv">Body</span><span class="p">).</span>
+</code></pre></div>
+<p>and we also have to export the functions to use it from outside:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="p">-</span><span class="ni">export</span><span class="p">([</span><span class="n">post</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">post</span><span class="o">/</span><span class="mi">3</span><span class="p">]).</span>
+</code></pre></div>
+<p>Now we can fire a POST request in our test:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="p">_,</span> <span class="p">_,</span> <span class="nv">Body</span><span class="p">}</span> <span class="o">=</span> <span class="nn">test_request</span><span class="p">:</span><span class="nf">post</span><span class="p">(</span><span class="nv">Url</span><span class="p">,</span>
+    <span class="p">[{</span><span class="s">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s">&quot;application/json&quot;</span><span class="p">}],</span>
+    <span class="s">&quot;{</span><span class="se">\&quot;</span><span class="s">name</span><span class="se">\&quot;</span><span class="s">:</span><span class="se">\&quot;</span><span class="s">rocko</span><span class="se">\&quot;</span><span class="s">, </span><span class="se">\&quot;</span><span class="s">password</span><span class="se">\&quot;</span><span class="s">:</span><span class="se">\&quot;</span><span class="s">artischocko</span><span class="se">\&quot;</span><span class="s">}&quot;</span><span class="p">),</span>
+</code></pre></div>
+<p>We have to decode the JSON that is coming back, let&#39;s use jiffy (jiffy is a JSON parser included in CouchDB) for that:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="p">{</span><span class="nv">Json</span><span class="p">}</span> <span class="o">=</span> <span class="nn">jiffy</span><span class="p">:</span><span class="nf">decode</span><span class="p">(</span><span class="nv">Body</span><span class="p">),</span>
+</code></pre></div>
+<p>and then get the value for the name field:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">proplists:get_value(&lt;&lt;&quot;name&quot;&gt;&gt;, Json)
+</code></pre></div>
+<p>The funky <code>&lt;&lt;&quot;name&quot;&gt;&gt;</code> notation means that we are using an Erlang binary. <code>proplists:get_value(&lt;&lt;&quot;name&quot;&gt;&gt;, Json)</code> will return a binary so we change the undefined, which was an Erlang atom to the binary <code>&lt;&lt;&quot;rocko&quot;&gt;&gt;</code>.</p>
+
+<p>Our whole test, which tests for the binary <code>&lt;&lt;&quot;rocko&quot;&gt;&gt;</code>:</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="nf">should_not_return_username_on_post_to_session</span><span class="p">(</span><span class="nv">Url</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="o">?</span><span class="p">_</span><span class="n">assertEqual</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;rocko&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+        <span class="k">begin</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="nn">config</span><span class="p">:</span><span class="nf">set</span><span class="p">(</span><span class="s">&quot;admins&quot;</span><span class="p">,</span> <span class="s">&quot;rocko&quot;</span><span class="p">,</span> <span class="s">&quot;artischocko&quot;</span><span class="p">,</span> <span class="n">false</span><span class="p">),</span>
+            <span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="p">_,</span> <span class="p">_,</span> <span class="nv">Body</span><span class="p">}</span> <span class="o">=</span> <span class="nn">test_request</span><span class="p">:</span><span class="nf">post</span><span class="p">(</span><span class="nv">Url</span><span class="p">,</span>
+                <span class="p">[{</span><span class="s">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s">&quot;application/json&quot;</span><span class="p">}],</span>
+                <span class="s">&quot;{</span><span class="se">\&quot;</span><span class="s">name</span><span class="se">\&quot;</span><span class="s">:</span><span class="se">\&quot;</span><span class="s">rocko</span><span class="se">\&quot;</span><span class="s">, </span><span class="se">\&quot;</span><span class="s">password</span><span class="se">\&quot;</span><span class="s">:</span><span class="se">\&quot;</span><span class="s">artischocko</span><span class="se">\&quot;</span><span class="s">}&quot;</span><span class="p">),</span>
+            <span class="p">{</span><span class="nv">Json</span><span class="p">}</span> <span class="o">=</span> <span class="nn">jiffy</span><span class="p">:</span><span class="nf">decode</span><span class="p">(</span><span class="nv">Body</span><span class="p">),</span>
+            <span class="nn">proplists</span><span class="p">:</span><span class="nf">get_value</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;name&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="nv">Json</span><span class="p">)</span>
+        <span class="k">end</span><span class="p">).</span>
+</code></pre></div>
+<p>running the tests for <code>src/couch</code> is easy, just run:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">rebar -r eunit apps=couch
+</code></pre></div>
+<p>We should have one failing test now. Back to the session handler!</p>
+
+<h3>Fixing the bug</h3>
+
+<p>When we take a second look at the <code>handle_session_req</code> which handles the POST-request we can see that we have access to a variable called <code>UserName</code> in our scope which is the username the user gave us!</p>
+
+<p><a href="https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/src/couch_httpd_auth.erl#L284">https://github.com/apache/couchdb-couch/blob/cb52507c1ced478e6900cae529584461c3d4910b/src/couch<em>httpd</em>auth.erl#L284</a></p>
+
+<p>This means that we can change</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="p">{</span><span class="n">name</span><span class="p">,</span> <span class="nn">couch_util</span><span class="p">:</span><span class="nf">get_value</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;name&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="nv">UserProps2</span><span class="p">,</span> <span class="n">null</span><span class="p">)},</span>
+</code></pre></div>
+<p>to</p>
+<div class="highlight"><pre><code class="language-erlang" data-lang="erlang"><span class="p">{</span><span class="n">name</span><span class="p">,</span> <span class="nv">UserName</span><span class="p">},</span>
+</code></pre></div>
+<p>When we now run our test suite again we should have a green tests and fixed our bug!</p>
+
+<h2>Recap</h2>
+
+<p>We fixed a small bug on a clustered CouchDB and learned about:</p>
+
+<ul>
+<li>Pattern matching</li>
+<li>Modules and exporting functions</li>
+<li>implicit returns</li>
+<li>Macros</li>
+<li>logging debug messages</li>
+<li>EUnit</li>
+</ul>
+
+<p>The article is based on a real-life pull-request: <a href="https://github.com/apache/couchdb-couch/pull/16/">https://github.com/apache/couchdb-couch/pull/16/</a> - and the CouchDB Community is happy about all contributions! See <a href="http://couchdb.apache.org/#contribute">http://couchdb.apache.org/#contribute</a> for further info.</p>
+
+<p>Apache CouchDB is an Open Source Project under Apache 2.0 License. The code used in this article is from Apache CouchDB, licensed under Apache License, Version 2.0, January 2004. For details, see: <a href="https://github.com/apache/couchdb/blob/master/LICENSE">https://github.com/apache/couchdb/blob/master/LICENSE</a></p>
+
+<p><img src="http://vg09.met.vgwort.de/na/2dbf8d67bd4843ce9c6a9f3727f25c9a" width="1" height="1" alt=""></p>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li class="small-bordered">
+        <span class="small-hide">10 Feb 2016&raquo; </span>
+        <a href="/blog/high-performance-erlang-finding-bottlenecks-couchdb-1">High Performance Erlang - Finding Bottlenecks in a CouchDB Cluster #1</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">09 Oct 2015&raquo; </span>
+        <a href="/blog/software-development-in-cuba">Software development in Cuba</a>
+      </li>
+    
+      <li class="small-bordered">
+        <span class="small-hide">02 Mar 2015&raquo; </span>
+        <a href="/blog/what-happened-while-contributing-to-open-source-on-a-daily-basis-for-one-year">What happened while contributing to Open Source on a daily basis for one year</a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+    <div class="footer">
+      <div class="contact">
+        <p>
+          Robert Kowalski<br />
+          <br />
+          rok@kowalski.gd
+        </p>
+      </div>
+      <div class="contact">
+        <p>
+          <a href="http://github.com/robertkowalski/">github.com/robertkowalski</a><br />
+          <a href="http://twitter.com/robinson_k/">twitter.com/robinson_k</a><br />
+        </p>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+  <script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-28167405-1', 'auto');
+  ga('set', 'anonymizeIp', true);
+  ga('send', 'pageview');
+</script>
+
+
+
+
+</body>
+</html>
+
